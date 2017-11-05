@@ -1,7 +1,7 @@
 (function(generator) {
   if (typeof exports === 'object') {
     const crypto = require('crypto')
-	crypto.getRandomValues = crypto.randomFillSync
+    crypto.getRandomValues = crypto.randomFillSync
     exports.mod = require('./bls_c.js')
     generator(exports, crypto, true)
   } else {
