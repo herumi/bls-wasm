@@ -30,16 +30,16 @@ function signatureTest() {
 }
 
 function pairingTest() {
-  let capi = bls.capi
-  let a = capi.mclBnFr_malloc()
-  let b = capi.mclBnFr_malloc()
-  let ab = capi.mclBnFr_malloc()
-  let P = capi.mclBnG1_malloc()
-  let aP = capi.mclBnG1_malloc()
-  let Q = capi.mclBnG2_malloc()
-  let bQ = capi.mclBnG2_malloc()
-  let e1 = capi.mclBnGT_malloc()
-  let e2 = capi.mclBnGT_malloc()
+  const capi = bls.capi
+  const a = capi.mclBnFr_malloc()
+  const b = capi.mclBnFr_malloc()
+  const ab = capi.mclBnFr_malloc()
+  const P = capi.mclBnG1_malloc()
+  const aP = capi.mclBnG1_malloc()
+  const Q = capi.mclBnG2_malloc()
+  const bQ = capi.mclBnG2_malloc()
+  const e1 = capi.mclBnGT_malloc()
+  const e2 = capi.mclBnGT_malloc()
 
   capi.mclBnFr_setStr(a, '123')
   capi.mclBnFr_setStr(b, '456')
@@ -68,23 +68,23 @@ function pairingTest() {
 }
 
 function bench(label, count, func) {
-  let start = Date.now()
+  const start = Date.now()
   for (let i = 0; i < count; i++) {
     func()
   }
-  let end = Date.now()
-  let t = (end - start) / count
+  const end = Date.now()
+  const t = (end - start) / count
   console.log(label + ' ' + t)
 }
 
 function benchPairing() {
-  let capi = bls.capi
-  let a = capi.mclBnFr_malloc()
-  let P = capi.mclBnG1_malloc()
-  let Q = capi.mclBnG2_malloc()
-  let e = capi.mclBnGT_malloc()
+  const capi = bls.capi
+  const a = capi.mclBnFr_malloc()
+  const P = capi.mclBnG1_malloc()
+  const Q = capi.mclBnG2_malloc()
+  const e = capi.mclBnGT_malloc()
 
-  let msg = 'hello wasm'
+  const msg = 'hello wasm'
 
   capi.mclBnFr_setByCSPRNG(a)
   capi.mclBnG1_hashAndMapTo(P, 'abc')
@@ -98,30 +98,34 @@ function benchPairing() {
   capi.mcl_free(Q)
   capi.mcl_free(P)
 
-  let sec = new bls.SecretKey()
+  const sec = new bls.SecretKey()
   bench('time_setByCSPRNG', 50, () => sec.setByCSPRNG())
 }
 
 function benchBls() {
-  let capi = bls.capi
-  let sec = capi.blsSecretKey_malloc()
-  let pub = capi.blsPublicKey_malloc()
-  let sig = capi.blsSignature_malloc()
+  const msg = 'hello wasm'
+  {
+    const capi = bls.capi
+    const sec = capi.blsSecretKey_malloc()
+    const pub = capi.blsPublicKey_malloc()
+    const sig = capi.blsSignature_malloc()
 
-  capi.blsSecretKeySetByCSPRNG(sec)
-  let msg = "hello wasm"
-  bench('time_sign', 50, () => capi.blsSign(sig, sec, msg))
-  bench('time_verify', 50, () => capi.blsVerify(sig, pub, msg))
+    capi.blsSecretKeySetByCSPRNG(sec)
+    bench('time_sign', 50, () => capi.blsSign(sig, sec, msg))
+    bench('time_verify', 50, () => capi.blsVerify(sig, pub, msg))
 
-  capi.bls_free(sec)
-  capi.bls_free(pub)
-  capi.bls_free(sig)
-  sec = new bls.SecretKey()
-  sec.setByCSPRNG()
-  pub = sec.getPublicKey()
-  bench('time_sign_class', 50, () => sec.sign(msg))
-  sig = sec.sign(msg)
-  bench('time_verify_class', 50, () => pub.verify(sig, msg))
+    capi.bls_free(sec)
+    capi.bls_free(pub)
+    capi.bls_free(sig)
+  }
+  {
+    const sec = new bls.SecretKey()
+    sec.setByCSPRNG()
+    const pub = sec.getPublicKey()
+    bench('time_sign_class', 50, () => sec.sign(msg))
+    const sig = sec.sign(msg)
+    bench('time_verify_class', 50, () => pub.verify(sig, msg))
+  }
 }
 
 function benchAll() {
@@ -145,7 +149,7 @@ function randSelect(k, n) {
   let a = []
   let prev = -1
   for (let i = 0; i < k; i++) {
-    let v = randRange(prev + 1, n - (k - i) + 1)
+    const v = randRange(prev + 1, n - (k - i) + 1)
     a.push(v)
     prev = v
   }
@@ -154,8 +158,8 @@ function randSelect(k, n) {
 
 function miscTest()
 {
-  let idDec = '65535'
-  var id = new bls.Id()
+  const idDec = '65535'
+  const id = new bls.Id()
   id.setStr(idDec)
   assert(id.getStr(), '65535')
   assert(id.getStr(16), 'ffff')
@@ -163,15 +167,15 @@ function miscTest()
 
 function shareTest()
 {
-  let k = 4
-  let n = 10
-  let msg = 'this is a pen'
-  let msk = []
-  let mpk = []
-  let idVec = []
-  let secVec = []
-  let pubVec = []
-  let sigVec = []
+  const k = 4
+  const n = 10
+  const msg = 'this is a pen'
+  const msk = []
+  const mpk = []
+  const idVec = []
+  const secVec = []
+  const pubVec = []
+  const sigVec = []
 
   /*
     setup master secret key
