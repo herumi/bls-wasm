@@ -1,16 +1,17 @@
-const bls = require('./index.js')
+const bls = require('./bls.js')
 const assert = require('assert')
 
-bls.init(() => {
-  const order = bls.capi.blsGetCurveOrder()
-  console.log('order=' + order)
-  signatureTest()
-  pairingTest()
-  miscTest()
-  shareTest()
-  console.log('all ok')
-  benchAll()
-})
+bls.init()
+  .then(() => {
+    const order = bls.capi.blsGetCurveOrder()
+    console.log('order=' + order)
+    signatureTest()
+    pairingTest()
+    miscTest()
+    shareTest()
+    console.log('all ok')
+    benchAll()
+  })
 
 function signatureTest() {
   const sec = new bls.SecretKey()
