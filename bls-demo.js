@@ -25,7 +25,7 @@ function onChangeSelectCurve() {
 function rand(val) {
 	const x = new she.Id()
 	x.setByCSPRNG()
-	setValue(val, c.toHexStr())
+	setValue(val, c.serializeToHexStr())
 }
 
 function bench(label, count, func) {
@@ -55,15 +55,15 @@ function onClickTestSignature() {
 	const sec = new bls.SecretKey()
 
 	sec.setByCSPRNG()
-	setText('secretKey', sec.toHexStr())
+	setText('secretKey', sec.serializeToHexStr())
 
 	const pub = sec.getPublicKey()
-	setText('publicKey', pub.toHexStr())
+	setText('publicKey', pub.serializeToHexStr())
 
 	const msg = getValue('msg')
 	console.log('msg=' + msg)
 	const sig = sec.sign(msg)
-	setText('signature', sig.toHexStr())
+	setText('signature', sig.serializeToHexStr())
 
 	const r = pub.verify(sig, msg)
 	setText('verifyResult', r ? 'ok' : 'err')
@@ -101,7 +101,7 @@ function onClickTestMisc()
 	setText('idHex', id.getStr(16))
 	const sec = new bls.SecretKey()
 	sec.setLittleEndian(bls.fromHexStr(getValue('sec1')))
-	setText('secSerialize', sec.toHexStr())
+	setText('secSerialize', sec.serializeToHexStr())
 }
 
 function onClickTestShare()
@@ -134,11 +134,11 @@ function onClickTestShare()
 		let pk = sk.getPublicKey()
 		mpk.push(pk)
 	}
-	setText('msk', bls.toHexStr(msk[0].serialize()))
-	setText('mpk', bls.toHexStr(mpk[0].serialize()))
+	setText('msk', msk[0].serializeToHexStr())
+	setText('mpk', mpk[0].serializeToHexStr())
 	{
 		let sig = msk[0].sign(msg)
-		setText('signature2', bls.toHexStr(sig.serialize()))
+		setText('signature2', sig.serializeToHexStr())
 		console.log('mpk[0] verify ' + mpk[0].verify(sig, msg))
 	}
 
@@ -167,10 +167,10 @@ function onClickTestShare()
 	let ol = document.createElement('ol')
 	let t = ''
 	for (let i = 0; i < n; i++) {
-		let id = idVec[i].toHexStr()
-		let sk = secVec[i].toHexStr()
-		let pk = pubVec[i].toHexStr()
-		let sig = sigVec[i].toHexStr()
+		let id = idVec[i].serializeToHexStr()
+		let sk = secVec[i].serializeToHexStr()
+		let pk = pubVec[i].serializeToHexStr()
+		let sig = sigVec[i].serializeToHexStr()
 		t += '<li id="ui"' + i + '"> '
 		t += 'id : <span id="id"' + i + '">' + id + '</span><br>'
 		t += 'pk : <span id="pk"' + i + '">' + pk + '</span><br>'
@@ -204,13 +204,13 @@ function onClickTestShare()
 		sec.recover(subSecVec, subIdVec)
 		pub.recover(subPubVec, subIdVec)
 		sig.recover(subSigVec, subIdVec)
-		let s = sec.toHexStr()
+		let s = sec.serializeToHexStr()
 		s += s == getText('msk') ? ' :ok' : ' :ng'
 		setText('recoverSec', s)
-		s = pub.toHexStr()
+		s = pub.serializeToHexStr()
 		s += s == getText('mpk') ? ' :ok' : ' :ng'
 		setText('recoverPub', s)
-		s = sig.toHexStr()
+		s = sig.serializeToHexStr()
 		s += s == getText('signature2') ? ' :ok' : ' :ng'
 		setText('recoverSig', s)
 	}

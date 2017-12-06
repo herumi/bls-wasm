@@ -13,9 +13,9 @@ bls.init()
   })
 
 function serializeSubTest(t, cstr) {
-  const s = t.toHexStr()
+  const s = t.serializeToHexStr()
   const t2 = new cstr()
-  t2.fromHexStr(s)
+  t2.deserializeHexStr(s)
   assert.deepEqual(t.serialize(), t2.serialize())
 }
 
@@ -129,9 +129,9 @@ function shareTest()
     const pk = sk.getPublicKey()
     mpk.push(pk)
   }
-  const secStr = msk[0].toHexStr()
-  const pubStr = mpk[0].toHexStr()
-  const sigStr = msk[0].sign(msg).toHexStr()
+  const secStr = msk[0].serializeToHexStr()
+  const pubStr = mpk[0].serializeToHexStr()
+  const sigStr = msk[0].sign(msg).serializeToHexStr()
   assert(mpk[0].verify(msk[0].sign(msg), msg))
 
   /*
@@ -178,9 +178,9 @@ function shareTest()
     sec.recover(subSecVec, subIdVec)
     pub.recover(subPubVec, subIdVec)
     sig.recover(subSigVec, subIdVec)
-    const s = sec.toHexStr()
-    assert(sec.toHexStr(), secStr)
-    assert(pub.toHexStr(), pubStr)
-    assert(sig.toHexStr(), sigStr)
+    const s = sec.serializeToHexStr()
+    assert(sec.serializeToHexStr(), secStr)
+    assert(pub.serializeToHexStr(), pubStr)
+    assert(sig.serializeToHexStr(), sigStr)
   }
 }

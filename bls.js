@@ -199,14 +199,14 @@
       constructor(size) {
         this.a_ = new Uint32Array(size / 4)
       }
-      fromHexStr(s) {
+      deserializeHexStr(s) {
         this.deserialize(exports.fromHexStr(s))
       }
-      toHexStr() {
+      serializeToHexStr() {
         return exports.toHexStr(this.serialize())
       }
       dump(msg = '') {
-        console.log(msg + this.toHexStr())
+        console.log(msg + this.serializeToHexStr())
       }
     }
 
@@ -254,9 +254,9 @@
         this.setLittleEndian(a)
       }
     }
-    exports.getIdFromHexStr = function(s) {
+    exports.deserializeHexStrToId = function(s) {
       r = new exports.Id()
-      r.fromHexStr(s)
+      r.deserializeHexStr(s)
       return r
     }
 
@@ -320,9 +320,9 @@
         return sig
       }
     }
-    exports.getSecretKeyFromHexStr = function(s) {
+    exports.deserializeHexStrToSecretKey = function(s) {
       r = new exports.SecretKey()
-      r.fromHexStr(s)
+      r.deserializeHexStr(s)
       return r
     }
 
@@ -353,9 +353,9 @@
         return r != 0
       }
     }
-    exports.getPublicKeyFromHexStr = function(s) {
+    exports.deserializeHexStrToPublicKey = function(s) {
       r = new exports.PublicKey()
-      r.fromHexStr(s)
+      r.deserializeHexStr(s)
       return r
     }
 
@@ -373,9 +373,9 @@
         callRecover(mod._blsSignatureRecover, this.a_, BLS_SIGNATURE_SIZE, secVec, idVec)
       }
     }
-    exports.getSignatureFromHexStr = function(s) {
+    exports.deserializeHexStrToSignature = function(s) {
       r = new exports.Signature()
-      r.fromHexStr(s)
+      r.deserializeHexStr(s)
       return r
     }
     exports.blsInit(curveType)
