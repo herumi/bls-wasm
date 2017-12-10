@@ -98,6 +98,16 @@
     const wrap_outputArray = function(func) {
       return wrap_outputString(func, false)
     }
+    const wrap_deserialize = function(func) {
+      return function(x, buf) {
+        const stack = mod.Runtime.stackSave()
+        const pos = mod.Runtime.stackAlloc(buf.length)
+        Uint8ArrayToMem(pos, buf)
+        const r = func(x, pos, buf.length)
+        mod.Runtime.stackRestore(stack)
+        if (r == 0) throw('err wrap_deserialize', buf)
+      }
+    }
     /*
       argNum : n
       func(x0, ..., x_(n-1), buf, ioMode)
@@ -185,10 +195,10 @@
     mod.blsPublicKeySerialize = wrap_outputArray(mod._blsPublicKeySerialize)
     mod.blsSignatureSerialize = wrap_outputArray(mod._blsSignatureSerialize)
 
-    mod.blsIdDeserialize = wrap_input(mod._blsIdDeserialize, 1)
-    mod.blsSecretKeyDeserialize = wrap_input(mod._blsSecretKeyDeserialize, 1)
-    mod.blsPublicKeyDeserialize = wrap_input(mod._blsPublicKeyDeserialize, 1)
-    mod.blsSignatureDeserialize = wrap_input(mod._blsSignatureDeserialize, 1)
+    mod.blsIdDeserialize = wrap_deserialize(mod._blsIdDeserialize)
+    mod.blsSecretKeyDeserialize = wrap_deserialize(mod._blsSecretKeyDeserialize)
+    mod.blsPublicKeyDeserialize = wrap_deserialize(mod._blsPublicKeyDeserialize)
+    mod.blsSignatureDeserialize = wrap_deserialize(mod._blsSignatureDeserialize)
 
     mod.blsSecretKeySetLittleEndian = wrap_input(mod._blsSecretKeySetLittleEndian, 1)
     mod.blsHashToSecretKey = wrap_input(mod._blsHashToSecretKey, 1)
