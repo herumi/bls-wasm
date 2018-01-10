@@ -12,14 +12,14 @@ bls.init()
     benchAll()
   })
 
-function serializeSubTest(t, cstr) {
+function serializeSubTest (t, Cstr) {
   const s = t.serializeToHexStr()
-  const t2 = new cstr()
+  const t2 = new Cstr()
   t2.deserializeHexStr(s)
   assert.deepEqual(t.serialize(), t2.serialize())
 }
 
-function serializeTest() {
+function serializeTest () {
   const sec = new bls.SecretKey()
   sec.setByCSPRNG()
   serializeSubTest(sec, bls.SecretKey)
@@ -33,7 +33,7 @@ function serializeTest() {
   serializeSubTest(id, bls.Id)
 }
 
-function signatureTest() {
+function signatureTest () {
   const sec = new bls.SecretKey()
 
   sec.setByCSPRNG()
@@ -50,7 +50,7 @@ function signatureTest() {
   assert(pub.verify(sig, msg))
 }
 
-function bench(label, count, func) {
+function bench (label, count, func) {
   const start = Date.now()
   for (let i = 0; i < count; i++) {
     func()
@@ -60,7 +60,7 @@ function bench(label, count, func) {
   console.log(label + ' ' + t)
 }
 
-function benchBls() {
+function benchBls () {
   const msg = 'hello wasm'
   const sec = new bls.SecretKey()
   sec.setByCSPRNG()
@@ -70,7 +70,7 @@ function benchBls() {
   bench('time_verify_class', 50, () => pub.verify(sig, msg))
 }
 
-function benchAll() {
+function benchAll () {
   benchBls()
 }
 
@@ -78,7 +78,7 @@ function benchAll() {
   return [min, max)
   assume min < max
 */
-function randRange(min, max) {
+function randRange (min, max) {
   return min + Math.floor(Math.random() * (max - min))
 }
 
@@ -86,7 +86,7 @@ function randRange(min, max) {
   select k of [0, n)
   @note not uniformal distribution
 */
-function randSelect(k, n) {
+function randSelect (k, n) {
   let a = []
   let prev = -1
   for (let i = 0; i < k; i++) {
@@ -97,8 +97,7 @@ function randSelect(k, n) {
   return a
 }
 
-function miscTest()
-{
+function miscTest () {
   const idDec = '65535'
   const id = new bls.Id()
   id.setStr(idDec)
@@ -106,8 +105,7 @@ function miscTest()
   assert(id.getStr(16), 'ffff')
 }
 
-function shareTest()
-{
+function shareTest () {
   const k = 4
   const n = 10
   const msg = 'this is a pen'
@@ -178,7 +176,6 @@ function shareTest()
     sec.recover(subSecVec, subIdVec)
     pub.recover(subPubVec, subIdVec)
     sig.recover(subSigVec, subIdVec)
-    const s = sec.serializeToHexStr()
     assert(sec.serializeToHexStr(), secStr)
     assert(pub.serializeToHexStr(), pubStr)
     assert(sig.serializeToHexStr(), sigStr)
