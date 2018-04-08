@@ -1,16 +1,34 @@
+'use strict'
 const bls = require('./bls.js')
 const assert = require('assert')
+const { performance } = require('perf_hooks')
 
-bls.init()
-  .then(() => {
-    console.log('curve order=' + bls.getCurveOrder())
-    serializeTest()
-    signatureTest()
-    miscTest()
-    shareTest()
-    console.log('all ok')
-    benchAll()
-  })
+const curveTest = (curveType, name) => {
+  bls.init(curveType)
+    .then(() => {
+      try {
+        console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
+        serializeTest()
+        signatureTest()
+        miscTest()
+        shareTest()
+        console.log('all ok')
+        benchAll()
+      } catch (e) {
+        console.log(`TEST FAIL ${e}`)
+        assert(false)
+      }
+    })
+}
+
+async function curveTestAll () {
+  // can't parallel
+  await curveTest(0, 'BN254')
+  await curveTest(1, 'BN381_1')
+  await curveTest(5, 'BLS12_381')
+}
+
+curveTestAll()
 
 function serializeSubTest (t, Cstr) {
   const s = t.serializeToHexStr()
@@ -51,13 +69,14 @@ function signatureTest () {
 }
 
 function bench (label, count, func) {
-  const start = Date.now()
+  const start = performance.now()
   for (let i = 0; i < count; i++) {
     func()
   }
-  const end = Date.now()
+  const end = performance.now()
   const t = (end - start) / count
-  console.log(label + ' ' + t)
+  const roundTime = (Math.round(t * 1000)) / 1000
+  console.log(label + ' ' + roundTime)
 }
 
 function benchBls () {
