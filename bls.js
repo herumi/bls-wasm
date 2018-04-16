@@ -10,15 +10,15 @@
   }
 })((exports, crypto, isNodeJs) => {
   /* eslint-disable */
-  const MCL_BN254 = 0
-  const MCL_BN381_1 = 1
-  const MCL_BLS12_381 = 5
+  exports.BN254 = 0
+  exports.BN381_1 = 1
+  exports.BLS12_381 = 5
   /* eslint-disable */
   const getUnitSize = curveType => {
     switch (curveType) {
-    case MCL_BN254:
-    case MCL_BN381_1:
-    case MCL_BLS12_381:
+    case exports.BN254:
+    case exports.BN381_1:
+    case exports.BLS12_381:
       return 6;
     default:
       throw new Error(`QQQ bad curveType=${curveType}`)
@@ -176,7 +176,7 @@
     }
 
     // change curveType
-    exports.blsInit = (curveType = MCL_BN254) => {
+    exports.blsInit = (curveType = exports.BN254) => {
       const r = mod._blsInit(curveType, MCLBN_FP_UNIT_SIZE)
       if (r) throw ('blsInit err ' + r)
     }
@@ -448,8 +448,8 @@
     exports.blsInit(curveType)
     console.log('finished')
   } // setup()
-  exports.init = (curveType = MCL_BN254) => {
-    console.log(`init curveType=${curveType}`)
+  exports.init = (curveType = exports.BN254) => {
+    exports.curveType = curveType
     const name = 'bls_c'
     return new Promise(resolve => {
       if (isNodeJs) {
