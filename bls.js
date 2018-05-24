@@ -34,7 +34,7 @@
     const BLS_SIGNATURE_SIZE = BLS_ID_SIZE * 3
 
     const _free = pos => {
-      mod._free(pos)
+      mod._blsFree(pos)
     }
     const ptrToAsciiStr = (pos, n) => {
       let s = ''
@@ -142,13 +142,13 @@
       const pos = mod._malloc(a.length * 4)
       func(pos, p1, p2) // p1, p2 may be undefined
       copyToUint32Array(a, pos)
-      mod._free(pos)
+      _free(pos)
     }
     const callGetter = (func, a, p1, p2) => {
       const pos = mod._malloc(a.length * 4)
       mod.HEAP32.set(a, pos / 4)
       const s = func(pos, p1, p2)
-      mod._free(pos)
+      _free(pos)
       return s
     }
     const callShare = (func, a, size, vec, id) => {
@@ -174,8 +174,8 @@
         copyFromUint32Array(idVecPos + BLS_ID_SIZE * i, idVec[i].a_)
       }
       func(secPos, vecPos, idVecPos, n)
-      mod._free(idVecPos)
-      mod._free(vecPos)
+      _free(idVecPos)
+      _free(vecPos)
       a._saveAndFree(secPos)
     }
 
@@ -452,6 +452,13 @@
     exports.blsInit(curveType)
     console.log('finished')
   } // setup()
+  const _cryptoGetRandomValues = function(p, n) {
+    const a = new Uint8Array(n)
+    crypto.getRandomValues(a)
+    for (let i = 0; i < n; i++) {
+      exports.mod.HEAP8[p + i] = a[i]
+    }
+  }
   exports.init = (curveType = exports.BN254) => {
     exports.curveType = curveType
     const name = 'bls_c'
@@ -460,6 +467,7 @@
         const path = require('path')
         const js = require(`./${name}.js`)
         const Module = {
+          cryptoGetRandomValues : _cryptoGetRandomValues,
           locateFile: baseName => { return path.join(__dirname, baseName) }
         }
         js(Module)
@@ -474,6 +482,7 @@
           .then(buffer => new Uint8Array(buffer))
           .then(() => {
             exports.mod = Module() // eslint-disable-line
+            exports.mod.cryptoGetRandomValues = _cryptoGetRandomValues
             exports.mod.onRuntimeInitialized = () => {
               setup(exports, curveType)
               resolve()
