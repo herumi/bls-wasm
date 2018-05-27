@@ -33,6 +33,9 @@
     const BLS_PUBLICKEY_SIZE = BLS_ID_SIZE * 3 * 2
     const BLS_SIGNATURE_SIZE = BLS_ID_SIZE * 3
 
+    const _malloc = size => {
+      return mod._blsMalloc(size)
+    }
     const _free = pos => {
       mod._blsFree(pos)
     }
@@ -85,7 +88,7 @@
     const _wrapGetStr = (func, returnAsStr = true) => {
       return (x, ioMode = 0) => {
         const maxBufSize = 3096
-        const pos = mod._malloc(maxBufSize)
+        const pos = _malloc(maxBufSize)
         const n = func(pos, maxBufSize, x, ioMode)
         if (n <= 0) {
           throw new Error('err gen_str:' + x)
@@ -105,7 +108,7 @@
     }
     const _wrapDeserialize = func => {
       return (x, buf) => {
-        const pos = mod._malloc(buf.length)
+        const pos = _malloc(buf.length)
         mod.HEAP8.set(buf, pos)
         const r = func(x, pos, buf.length)
         _free(pos)
@@ -126,7 +129,7 @@
           throw new Error(`err bad type:"${typeStr}". Use String or Uint8Array.`)
         }
         const ioMode = args[argNum + 1] // may undefined
-        const pos = mod._malloc(buf.length)
+        const pos = _malloc(buf.length)
         if (typeStr === '[object String]') {
           asciiStrToPtr(pos, buf)
         } else {
@@ -139,13 +142,13 @@
       }
     }
     const callSetter = (func, a, p1, p2) => {
-      const pos = mod._malloc(a.length * 4)
+      const pos = _malloc(a.length * 4)
       func(pos, p1, p2) // p1, p2 may be undefined
       copyToUint32Array(a, pos)
       _free(pos)
     }
     const callGetter = (func, a, p1, p2) => {
-      const pos = mod._malloc(a.length * 4)
+      const pos = _malloc(a.length * 4)
       mod.HEAP32.set(a, pos / 4)
       const s = func(pos, p1, p2)
       _free(pos)
@@ -154,7 +157,7 @@
     const callShare = (func, a, size, vec, id) => {
       const pos = a._allocAndCopy()
       const idPos = id._allocAndCopy()
-      const vecPos = mod._malloc(size * vec.length)
+      const vecPos = _malloc(size * vec.length)
       for (let i = 0; i < vec.length; i++) {
         copyFromUint32Array(vecPos + size * i, vec[i].a_)
       }
@@ -167,8 +170,8 @@
       const n = vec.length
       if (n != idVec.length) throw ('recover:bad length')
       const secPos = a._alloc()
-      const vecPos = mod._malloc(size * n)
-      const idVecPos = mod._malloc(BLS_ID_SIZE * n)
+      const vecPos = _malloc(size * n)
+      const idVecPos = _malloc(BLS_ID_SIZE * n)
       for (let i = 0; i < n; i++) {
         copyFromUint32Array(vecPos + size * i, vec[i].a_)
         copyFromUint32Array(idVecPos + BLS_ID_SIZE * i, idVec[i].a_)
@@ -225,7 +228,7 @@
       }
       // alloc new array
       _alloc () {
-        return mod._malloc(this.a_.length * 4)
+        return _malloc(this.a_.length * 4)
       }
       // alloc and copy a_ to mod.HEAP32[pos / 4]
       _allocAndCopy () {
