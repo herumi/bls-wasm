@@ -28,6 +28,8 @@
   const setup = (exports, curveType) => {
     const mod = exports.mod
     const MCLBN_FP_UNIT_SIZE = getUnitSize(curveType)
+    const MCLBN_FR_UNIT_SIZE = MCLBN_FP_UNIT_SIZE
+    const MCLBN_COMPILED_TIME_VAR = (MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE)
     const BLS_ID_SIZE = MCLBN_FP_UNIT_SIZE * 8
     const BLS_SECRETKEY_SIZE = BLS_ID_SIZE
     const BLS_PUBLICKEY_SIZE = BLS_ID_SIZE * 3 * 2
@@ -184,7 +186,7 @@
 
     // change curveType
     exports.blsInit = (curveType = exports.BN254) => {
-      const r = mod._blsInit(curveType, MCLBN_FP_UNIT_SIZE)
+      const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
