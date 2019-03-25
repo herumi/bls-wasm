@@ -300,6 +300,9 @@
       setInt (x) {
         this._setter(mod._blsIdSetInt, x)
       }
+      isEqual (rhs) {
+        return this._isEqual(mod._blsIdIsEqual, rhs)
+      }
       deserialize (s) {
         this._setter(mod.blsIdDeserialize, s)
       }
@@ -349,6 +352,9 @@
       }
       setInt (x) {
         this._setter(mod._blsIdSetInt, x) // same as Id
+      }
+      isEqual (rhs) {
+        return this._isEqual(mod._blsSecretKeyIsEqual, rhs)
       }
       deserialize (s) {
         this._setter(mod.blsSecretKeyDeserialize, s)
@@ -408,6 +414,9 @@
       constructor () {
         super(BLS_PUBLICKEY_SIZE)
       }
+      isEqual (rhs) {
+        return this._isEqual(mod._blsPublicKeyIsEqual, rhs)
+      }
       deserialize (s) {
         this._setter(mod.blsPublicKeyDeserialize, s)
       }
@@ -438,6 +447,9 @@
     exports.Signature = class extends Common {
       constructor () {
         super(BLS_SIGNATURE_SIZE)
+      }
+      isEqual (rhs) {
+        return this._isEqual(mod._blsSignatureIsEqual, rhs)
       }
       deserialize (s) {
         this._setter(mod.blsSignatureDeserialize, s)
