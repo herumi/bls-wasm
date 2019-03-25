@@ -291,6 +291,15 @@
         _free(xPos)
         return z
       }
+      // func(self, y)
+      _update (func, y) {
+        const xPos = this._allocAndCopy()
+        const yPos = y._allocAndCopy()
+        func(xPos, yPos)
+        this._saveAndFree(xPos)
+        _free(yPos)
+        _free(xPos)
+      }
     }
 
     exports.Id = class extends Common {
@@ -362,6 +371,9 @@
       serialize () {
         return this._getter(mod.blsSecretKeySerialize)
       }
+      add (rhs) {
+        this._update(mod._blsSecretKeyAdd, rhs)
+      }
       share (msk, id) {
         callShare(mod._blsSecretKeyShare, this, BLS_SECRETKEY_SIZE, msk, id)
       }
@@ -423,6 +435,9 @@
       serialize () {
         return this._getter(mod.blsPublicKeySerialize)
       }
+      add (rhs) {
+        this._update(mod._blsPublicKeyAdd, rhs)
+      }
       share (msk, id) {
         callShare(mod._blsPublicKeyShare, this, BLS_PUBLICKEY_SIZE, msk, id)
       }
@@ -456,6 +471,9 @@
       }
       serialize () {
         return this._getter(mod.blsSignatureSerialize)
+      }
+      add (rhs) {
+        this._update(mod._blsSignatureAdd, rhs)
       }
       recover (secVec, idVec) {
         callRecover(mod._blsSignatureRecover, this, BLS_SIGNATURE_SIZE, secVec, idVec)

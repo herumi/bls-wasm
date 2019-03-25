@@ -12,6 +12,7 @@ const curveTest = (curveType, name) => {
         signatureTest()
         miscTest()
         shareTest()
+        addTest()
         console.log('all ok')
         benchAll()
       } catch (e) {
@@ -199,4 +200,27 @@ function shareTest () {
     assert(pub.serializeToHexStr(), pubStr)
     assert(sig.serializeToHexStr(), sigStr)
   }
+}
+
+function addTest () {
+  const n = 5
+  const m = "abc"
+  const sec = []
+  const pub = []
+  const sig = []
+  for (let i = 0; i < n; i++) {
+    sec.push(new bls.SecretKey())
+    sec[i].setByCSPRNG()
+    pub.push(sec[i].getPublicKey())
+    sig.push(sec[i].sign(m))
+    assert(pub[i].verify(sig[i], m))
+  }
+  for (let i = 1; i < n; i++) {
+    sec[0].add(sec[i])
+    pub[0].add(pub[i])
+    sig[0].add(sig[i])
+  }
+  assert(pub[0].verify(sig[0], m))
+  const sig2 = sec[0].sign(m)
+  assert(sig2.isEqual(sig[0]))
 }
