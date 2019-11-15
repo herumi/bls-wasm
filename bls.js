@@ -485,7 +485,6 @@
       return r
     }
     exports.blsInit(curveType)
-    console.log('finished')
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)
