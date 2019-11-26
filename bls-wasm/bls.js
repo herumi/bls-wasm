@@ -212,6 +212,11 @@
     mod.blsSign = _wrapInput(mod._blsSign, 2)
     mod.blsVerify = _wrapInput(mod._blsVerify, 2, true)
 
+
+    //eth2
+    mod.blsSignHashWithDomain = _wrapInput(mod._blsSignHashWithDomain, 2, true)
+    mod.blsVerifyHashWithDomain = _wrapInput(mod._blsVerifyHashWithDomain, 2, true)
+    mod.blsVerifyAggregatedHashWithDomain = _wrapInput(mod._blsVerifyAggregatedHashWithDomain, 2, true)
     class Common {
       constructor (size) {
         this.a_ = new Uint32Array(size / 4)
@@ -410,7 +415,7 @@
         const sig = new exports.Signature()
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
-        mod.blsSign(sigPos, secPos, m)
+        mod.blsSignHashWithDomain(sigPos, secPos, m)
         sig._saveAndFree(sigPos)
         _free(secPos)
         return sig
@@ -447,10 +452,10 @@
       verify (sig, m) {
         const pubPos = this._allocAndCopy()
         const sigPos = sig._allocAndCopy()
-        const r = mod.blsVerify(sigPos, pubPos, m)
+        const r = mod.blsVerifyHashWithDomain(sigPos, pubPos, m)
         _free(sigPos)
         _free(pubPos)
-        return r != 0
+        return r !== 0
       }
     }
     exports.deserializeHexStrToPublicKey = s => {

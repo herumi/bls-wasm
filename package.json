@@ -1,9 +1,10 @@
 {
-  "name": "bls-wasm",
-  "version": "0.2.7",
-  "description": "BLS signature for Node.js by WebAssembly",
+  "name": "eth2-bls-wasm",
+  "version": "0.0.1",
+  "description": "BLS signature by WebAssembly",
   "main": "bls.js",
   "scripts": {
+    "build": "cd bls && make BLS_ETH=1 -s ASSERTIONS=1 bls-wasm",
     "test": "node test.js"
   },
   "repository": {

@@ -1,5 +1,5 @@
 'use strict'
-const bls = require('./bls.js')
+const bls = require('./bls-wasm/bls.js')
 const assert = require('assert')
 const { performance } = require('perf_hooks')
 
@@ -8,13 +8,8 @@ const curveTest = (curveType, name) => {
     .then(() => {
       try {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
-        serializeTest()
         signatureTest()
-        miscTest()
-        shareTest()
-        addTest()
         console.log('all ok')
-        benchAll()
       } catch (e) {
         console.log(`TEST FAIL ${e}`)
         assert(false)
@@ -24,8 +19,8 @@ const curveTest = (curveType, name) => {
 
 async function curveTestAll () {
   // can't parallel
-  await curveTest(bls.BN254, 'BN254')
-  await curveTest(bls.BN381_1, 'BN381_1')
+  // await curveTest(bls.BN254, 'BN254')
+  // await curveTest(bls.BN381_1, 'BN381_1')
   await curveTest(bls.BLS12_381, 'BLS12_381')
 }
 
@@ -54,19 +49,21 @@ function serializeTest () {
 
 function signatureTest () {
   const sec = new bls.SecretKey()
-
-  sec.setByCSPRNG()
+  sec.setInt(1)
   sec.dump('secretKey ')
 
   const pub = sec.getPublicKey()
   pub.dump('publicKey ')
 
-  const msg = 'doremifa'
-  console.log('msg ' + msg)
+  const msg = new Uint8Array(40)
+  msg.fill(1)
+  const msg2 = new Uint8Array(40)
+  msg2.fill(1)
   const sig = sec.sign(msg)
   sig.dump('signature ')
-
-  assert(pub.verify(sig, msg))
+  const sig2 = sec.sign(msg)
+  sig2.dump('signature ')
+  console.log(pub.verify(sig2, msg))
 }
 
 function bench (label, count, func) {
