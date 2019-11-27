@@ -10,6 +10,8 @@ declare class Common {
 
     clear(): void;
 
+    clone(): this;
+
     isEqual(rhs: this): boolean
 
     deserialize(v: Uint8Array): void;

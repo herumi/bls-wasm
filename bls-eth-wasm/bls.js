@@ -211,6 +211,12 @@
       clear () {
         this.a_.fill(0)
       }
+
+      clone() {
+        const copy = new this.constructor();
+        copy.a_ = this.a_.slice(0);
+        return copy;
+      }
       // alloc new array
       _alloc () {
         return _malloc(this.a_.length * 4)
