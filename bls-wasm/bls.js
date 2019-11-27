@@ -13,27 +13,19 @@
   exports.BN254 = 0
   exports.BN381_1 = 1
   exports.BLS12_381 = 5
-  /* eslint-disable */
-  const getUnitSize = curveType => {
-    switch (curveType) {
-    case exports.BN254:
-    case exports.BN381_1:
-    case exports.BLS12_381:
-      return 6;
-    default:
-      throw new Error(`QQQ bad curveType=${curveType}`)
-    }
-  }
 
   const setup = (exports, curveType) => {
     const mod = exports.mod
-    const MCLBN_FP_UNIT_SIZE = getUnitSize(curveType)
-    const MCLBN_FR_UNIT_SIZE = MCLBN_FP_UNIT_SIZE
-    const MCLBN_COMPILED_TIME_VAR = (MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE)
-    const BLS_ID_SIZE = MCLBN_FP_UNIT_SIZE * 8
-    const BLS_SECRETKEY_SIZE = BLS_ID_SIZE
-    const BLS_PUBLICKEY_SIZE = BLS_ID_SIZE * 3 * 2
-    const BLS_SIGNATURE_SIZE = BLS_ID_SIZE * 3
+    const MCLBN_FP_UNIT_SIZE = 6
+    const MCLBN_FR_UNIT_SIZE = 4
+    const BLS_COMPILER_TIME_VAR_ADJ = 200
+    const MCLBN_COMPILED_TIME_VAR = (MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE) + BLS_COMPILER_TIME_VAR_ADJ
+    const BLS_ID_SIZE = MCLBN_FR_UNIT_SIZE * 8
+    const BLS_SECRETKEY_SIZE = MCLBN_FP_UNIT_SIZE * 8
+    const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3
+    const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * 2
+    const MSG_SIZE = 40
+    exports.MSG_SIZE = MSG_SIZE
 
     const _malloc = size => {
       return mod._blsMalloc(size)
@@ -185,7 +177,7 @@
     }
 
     // change curveType
-    exports.blsInit = (curveType = exports.BN254) => {
+    exports.blsInit = (curveType = exports.BLS12_381) => {
       const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
@@ -212,11 +204,6 @@
     mod.blsSign = _wrapInput(mod._blsSign, 2)
     mod.blsVerify = _wrapInput(mod._blsVerify, 2, true)
 
-
-    //eth2
-    mod.blsSignHashWithDomain = _wrapInput(mod._blsSignHashWithDomain, 2, true)
-    mod.blsVerifyHashWithDomain = _wrapInput(mod._blsVerifyHashWithDomain, 2, true)
-    mod.blsVerifyAggregatedHashWithDomain = _wrapInput(mod._blsVerifyAggregatedHashWithDomain, 2, true)
     class Common {
       constructor (size) {
         this.a_ = new Uint32Array(size / 4)
@@ -415,7 +402,26 @@
         const sig = new exports.Signature()
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
-        mod.blsSignHashWithDomain(sigPos, secPos, m)
+        mod.blsSign(sigPos, secPos, m)
+        sig._saveAndFree(sigPos)
+        _free(secPos)
+        return sig
+      }
+      /*
+        input
+        m : message (40 bytes Uint8Array)
+        return
+        BlsSignature
+      */
+      signHashWithDomain (m) {
+        if (m.length != MSG_SIZE) throw new Error(`bad size message:${m.length}`)
+        const sig = new exports.Signature()
+        const secPos = this._allocAndCopy()
+        const sigPos = sig._alloc()
+        const mPos = _malloc(MSG_SIZE)
+        mod.HEAP8.set(m, mPos)
+        mod._blsSignHashWithDomain(sigPos, secPos, mPos)
+        _free(mPos)
         sig._saveAndFree(sigPos)
         _free(secPos)
         return sig
@@ -452,10 +458,22 @@
       verify (sig, m) {
         const pubPos = this._allocAndCopy()
         const sigPos = sig._allocAndCopy()
-        const r = mod.blsVerifyHashWithDomain(sigPos, pubPos, m)
+        const r = mod.blsVerify(sigPos, pubPos, m)
         _free(sigPos)
         _free(pubPos)
-        return r !== 0
+        return r != 0
+      }
+      verifyHashWithDomain (sig, m) {
+        if (m.length != MSG_SIZE) return false
+        const pubPos = this._allocAndCopy()
+        const sigPos = sig._allocAndCopy()
+        const mPos = _malloc(MSG_SIZE)
+        mod.HEAP8.set(m, mPos)
+        const r = mod._blsVerifyHashWithDomain(sigPos, pubPos, mPos)
+        _free(mPos)
+        _free(sigPos)
+        _free(pubPos)
+        return r != 0
       }
     }
     exports.deserializeHexStrToPublicKey = s => {
@@ -483,6 +501,24 @@
       recover (secVec, idVec) {
         callRecover(mod._blsSignatureRecover, this, BLS_SIGNATURE_SIZE, secVec, idVec)
       }
+      // this = aggSig
+      verifyAggregatedHashWithDomain (pubVec, msgVec) {
+        if (pubVec.length != msgVec.length) throw new Error('bad length')
+        const n = pubVec.length
+        if (n == 0) return false
+        const aggSigPos = this._allocAndCopy()
+        const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
+        const msgVecPos = _malloc(MSG_SIZE * n)
+        for (let i = 0; i < n; i++) {
+          mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
+          mod.HEAP8.set(msgVec[i], msgVecPos + MSG_SIZE * i)
+        }
+        const r = mod._blsVerifyAggregatedHashWithDomain(aggSigPos, pubVecPos, msgVecPos, n)
+        _free(msgVecPos)
+        _free(pubVecPos)
+        _free(aggSigPos)
+        return r != 0
+      }
     }
     exports.deserializeHexStrToSignature = s => {
       const r = new exports.Signature()
@@ -490,6 +526,7 @@
       return r
     }
     exports.blsInit(curveType)
+    console.log('finished')
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)

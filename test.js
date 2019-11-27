@@ -8,7 +8,7 @@ const curveTest = (curveType, name) => {
     .then(() => {
       try {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
-        signatureTest()
+        aggTest()
         console.log('all ok')
       } catch (e) {
         console.log(`TEST FAIL ${e}`)
@@ -19,8 +19,6 @@ const curveTest = (curveType, name) => {
 
 async function curveTestAll () {
   // can't parallel
-  // await curveTest(bls.BN254, 'BN254')
-  // await curveTest(bls.BN381_1, 'BN381_1')
   await curveTest(bls.BLS12_381, 'BLS12_381')
 }
 
@@ -49,21 +47,19 @@ function serializeTest () {
 
 function signatureTest () {
   const sec = new bls.SecretKey()
-  sec.setInt(1)
+
+  sec.setByCSPRNG()
   sec.dump('secretKey ')
 
   const pub = sec.getPublicKey()
   pub.dump('publicKey ')
 
-  const msg = new Uint8Array(40)
-  msg.fill(1)
-  const msg2 = new Uint8Array(40)
-  msg2.fill(1)
+  const msg = 'doremifa'
+  console.log('msg ' + msg)
   const sig = sec.sign(msg)
   sig.dump('signature ')
-  const sig2 = sec.sign(msg)
-  sig2.dump('signature ')
-  console.log(pub.verify(sig2, msg))
+
+  assert(pub.verify(sig, msg))
 }
 
 function bench (label, count, func) {
@@ -220,4 +216,25 @@ function addTest () {
   assert(pub[0].verify(sig[0], m))
   const sig2 = sec[0].sign(m)
   assert(sig2.isEqual(sig[0]))
+}
+
+function aggTest () {
+  const n = 100
+  const secVec = []
+  const pubVec = []
+  const sigVec = []
+  const msgVec = []
+  for (let i = 0; i < n; i++) {
+    secVec.push(new bls.SecretKey())
+    secVec[i].setByCSPRNG()
+    pubVec.push(secVec[i].getPublicKey())
+    msgVec.push(new Uint8Array(bls.MSG_SIZE))
+    sigVec.push(secVec[i].signHashWithDomain(msgVec[i]))
+    assert(pubVec[i].verifyHashWithDomain(sigVec[i], msgVec[i]))
+  }
+  const aggSig = sigVec[0]
+  for (let i = 1; i < n; i++) {
+    aggSig.add(sigVec[i])
+  }
+  assert(aggSig.verifyAggregatedHashWithDomain(pubVec, msgVec))
 }

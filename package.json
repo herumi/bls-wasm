@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/herumi/bls-wasm#readme",
   "devDependencies": {
+    "assert": "^2.0.0",
     "standard": "^10.0.3"
   }
 }
