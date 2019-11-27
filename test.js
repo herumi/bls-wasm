@@ -1,10 +1,10 @@
 'use strict'
-const bls = require('./bls-wasm/bls.js')
+const bls = require('./bls-eth-wasm/bls.js')
 const assert = require('assert')
 const { performance } = require('perf_hooks')
 
 const curveTest = (curveType, name) => {
-  bls.init(curveType)
+  bls.init()
     .then(() => {
       try {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)

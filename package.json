@@ -2,9 +2,14 @@
   "name": "eth2-bls-wasm",
   "version": "0.0.1",
   "description": "BLS signature by WebAssembly",
-  "main": "bls.js",
+  "main": "bls-eth-wasm/bls.js",
+  "types": "./bls-wasm/bls.d.ts",
+  "files": [
+    "bls-eth-wasm"
+  ],
   "scripts": {
-    "build": "cd bls && make BLS_ETH=1 -s ASSERTIONS=1 bls-wasm",
+    "prebuild": "rm -f bls-eth-wasm/bls_c.js && rm -f bls-eth-wasm/bls_c.wasm",
+    "build": "cd bls && make clean && make bls-eth-wasm",
     "test": "node test.js"
   },
   "repository": {

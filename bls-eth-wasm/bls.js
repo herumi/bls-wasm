@@ -10,11 +10,9 @@
   }
 })((exports, crypto, isNodeJs) => {
   /* eslint-disable */
-  exports.BN254 = 0
-  exports.BN381_1 = 1
   exports.BLS12_381 = 5
 
-  const setup = (exports, curveType) => {
+  const setup = (exports) => {
     const mod = exports.mod
     const MCLBN_FP_UNIT_SIZE = 6
     const MCLBN_FR_UNIT_SIZE = 4
@@ -177,24 +175,17 @@
     }
 
     // change curveType
-    exports.blsInit = (curveType = exports.BLS12_381) => {
-      const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
+    exports.blsInit = () => {
+      const r = mod._blsInit(exports.BLS12_381, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
 
-    mod.blsIdSetDecStr = _wrapInput(mod._blsIdSetDecStr, 1)
-    mod.blsIdSetHexStr = _wrapInput(mod._blsIdSetHexStr, 1)
-    mod.blsIdGetDecStr = _wrapGetStr(mod._blsIdGetDecStr)
-    mod.blsIdGetHexStr = _wrapGetStr(mod._blsIdGetHexStr)
-
-    mod.blsIdSerialize = _wrapSerialize(mod._blsIdSerialize)
     mod.blsSecretKeySerialize = _wrapSerialize(mod._blsSecretKeySerialize)
     mod.blsPublicKeySerialize = _wrapSerialize(mod._blsPublicKeySerialize)
     mod.blsSignatureSerialize = _wrapSerialize(mod._blsSignatureSerialize)
 
-    mod.blsIdDeserialize = _wrapDeserialize(mod._blsIdDeserialize)
     mod.blsSecretKeyDeserialize = _wrapDeserialize(mod._blsSecretKeyDeserialize)
     mod.blsPublicKeyDeserialize = _wrapDeserialize(mod._blsPublicKeyDeserialize)
     mod.blsSignatureDeserialize = _wrapDeserialize(mod._blsSignatureDeserialize)
@@ -294,59 +285,6 @@
       }
     }
 
-    exports.Id = class extends Common {
-      constructor () {
-        super(BLS_ID_SIZE)
-      }
-      setInt (x) {
-        this._setter(mod._blsIdSetInt, x)
-      }
-      isEqual (rhs) {
-        return this._isEqual(mod._blsIdIsEqual, rhs)
-      }
-      deserialize (s) {
-        this._setter(mod.blsIdDeserialize, s)
-      }
-      serialize () {
-        return this._getter(mod.blsIdSerialize)
-      }
-      setStr (s, base = 10) {
-        switch (base) {
-          case 10:
-            this._setter(mod.blsIdSetDecStr, s)
-            return
-          case 16:
-            this._setter(mod.blsIdSetHexStr, s)
-            return
-          default:
-            throw ('BlsId.setStr:bad base:' + base)
-        }
-      }
-      getStr (base = 10) {
-        switch (base) {
-          case 10:
-            return this._getter(mod.blsIdGetDecStr)
-          case 16:
-            return this._getter(mod.blsIdGetHexStr)
-          default:
-            throw ('BlsId.getStr:bad base:' + base)
-        }
-      }
-      setLittleEndian (s) {
-        this._setter(mod.blsSecretKeySetLittleEndian, s)
-      }
-      setByCSPRNG () {
-        const a = new Uint8Array(BLS_ID_SIZE)
-        crypto.getRandomValues(a)
-        this.setLittleEndian(a)
-      }
-    }
-    exports.deserializeHexStrToId = s => {
-      const r = new exports.Id()
-      r.deserializeHexStr(s)
-      return r
-    }
-
     exports.SecretKey = class extends Common {
       constructor () {
         super(BLS_SECRETKEY_SIZE)
@@ -414,7 +352,7 @@
         BlsSignature
       */
       signHashWithDomain (m) {
-        if (m.length != MSG_SIZE) throw new Error(`bad size message:${m.length}`)
+        if (m.length !== MSG_SIZE) throw new Error(`bad size message:${m.length}`)
         const sig = new exports.Signature()
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
@@ -461,10 +399,10 @@
         const r = mod.blsVerify(sigPos, pubPos, m)
         _free(sigPos)
         _free(pubPos)
-        return r != 0
+        return r !== 0
       }
       verifyHashWithDomain (sig, m) {
-        if (m.length != MSG_SIZE) return false
+        if (m.length !== MSG_SIZE) return false
         const pubPos = this._allocAndCopy()
         const sigPos = sig._allocAndCopy()
         const mPos = _malloc(MSG_SIZE)
@@ -473,7 +411,7 @@
         _free(mPos)
         _free(sigPos)
         _free(pubPos)
-        return r != 0
+        return r !== 0
       }
     }
     exports.deserializeHexStrToPublicKey = s => {
@@ -503,9 +441,9 @@
       }
       // this = aggSig
       verifyAggregatedHashWithDomain (pubVec, msgVec) {
-        if (pubVec.length != msgVec.length) throw new Error('bad length')
+        if (pubVec.length !== msgVec.length) throw new Error('bad length')
         const n = pubVec.length
-        if (n == 0) return false
+        if (n === 0) return false
         const aggSigPos = this._allocAndCopy()
         const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
         const msgVecPos = _malloc(MSG_SIZE * n)
@@ -517,7 +455,7 @@
         _free(msgVecPos)
         _free(pubVecPos)
         _free(aggSigPos)
-        return r != 0
+        return r !== 0
       }
     }
     exports.deserializeHexStrToSignature = s => {
@@ -525,7 +463,7 @@
       r.deserializeHexStr(s)
       return r
     }
-    exports.blsInit(curveType)
+    exports.blsInit()
     console.log('finished')
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
@@ -535,8 +473,8 @@
       exports.mod.HEAP8[p + i] = a[i]
     }
   }
-  exports.init = (curveType = exports.BN254) => {
-    exports.curveType = curveType
+  exports.init = () => {
+    exports.curveType = exports.BLS12_381
     const name = 'bls_c'
     return new Promise(resolve => {
       if (isNodeJs) {
@@ -549,7 +487,7 @@
         js(Module)
           .then(_mod => {
             exports.mod = _mod
-            setup(exports, curveType)
+            setup(exports, exports.curveType)
             resolve()
           })
       } else {
@@ -560,7 +498,7 @@
             exports.mod = Module() // eslint-disable-line
             exports.mod.cryptoGetRandomValues = _cryptoGetRandomValues
             exports.mod.onRuntimeInitialized = () => {
-              setup(exports, curveType)
+              setup(exports, exports.curveType)
               resolve()
             }
           })
