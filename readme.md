@@ -1,12 +1,24 @@
 [![Build Status](https://travis-ci.org/herumi/bls-wasm.png)](https://travis-ci.org/herumi/bls-wasm)
-# BLS signature for Node.js by WebAssembly
+# BLS signature for Node.js and Web by WebAssembly
 
 # Abstract
 
 see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/bls-demo.html)
 
-## for Node.js
+## Development
+
+`git clone --recursive git@github.com:ChainSafe/eth2-bls-wasm.git`
+
+Requirements:
+- Node.js >= 8.9.0
+- emcc
+- yarn
+- `yarn run build`
+
+Run tests:
+```
 node test.js
+```
 
 # License
 
