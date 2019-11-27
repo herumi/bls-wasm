@@ -1,4 +1,5 @@
-interface Common {
+declare class Common {
+
     constructor(size: number);
 
     deserializeHexStr(s: string): void;
@@ -18,7 +19,7 @@ interface Common {
     add(rhs: this): void;
 }
 
-interface SecretKey extends Common {
+declare class SecretKeyType extends Common {
 
     constructor();
 
@@ -30,62 +31,54 @@ interface SecretKey extends Common {
 
     setByCSPRNG(): void;
 
-    getPublicKey(): PublicKey;
+    getPublicKey(): PublicKeyType;
 
-    sign(m: string | Uint8Array): Signature;
+    sign(m: string | Uint8Array): SignatureType;
 
     /**
      *
      * @param m must have 40 bytes
      */
-    signHashWithDomain(m: Uint8Array): Signature;
+    signHashWithDomain(m: Uint8Array): SignatureType;
 }
 
-interface PublicKey extends Common {
+declare class PublicKeyType extends Common {
+
     constructor();
 
-    verify(signature: Signature, m: Uint8Array | string): boolean;
+    verify(signature: SignatureType, m: Uint8Array | string): boolean;
 
     /**
      *
      * @param signature
      * @param m must have 40 bytes
      */
-    verifyHashWithDomain(signature: Signature, m: Uint8Array): boolean;
+    verifyHashWithDomain(signature: SignatureType, m: Uint8Array): boolean;
 }
 
-interface Signature extends Common {
+declare class SignatureType extends Common {
+    constructor();
 
     /**
      *
      * @param publicKeys
      * @param messages each message must have 40bytes
      */
-    verifyAggregatedHashWithDomain(publicKeys: PublicKey[], messages: Uint8Array[]): boolean
+    verifyAggregatedHashWithDomain(publicKeys: PublicKeyType[], messages: Uint8Array[]): boolean
 
 }
 
-export interface BlsWasmWrapper {
+export function init(): Promise<void>;
 
-    init(): Promise<void>;
+export function toHex(a: Uint8Array, start: number, length: number): string;
+export function toHexStr(a: Uint8Array): string;
+export function fromHexStr(s: string): Uint8Array;
+export function getCurveOrder(): string;
+export function getFieldOrder(): string;
+export function deserializeHexStrToSecretKey(s: string): SecretKeyType;
+export function deserializeHexStrToPublicKey(s: string): PublicKeyType;
+export function deserializeHexStrToSignature(s: string): SignatureType;
 
-    toHex(array: Uint8Array, start: number, end: number): string;
-
-    toHexStr(array: Uint8Array): string;
-
-    fromHexStr(s: string): Uint8Array;
-
-    getCurveOrder(): number;
-
-    getFieldOrder(): number;
-
-    deserializeHexStrToSecretKey(s: string): SecretKey;
-
-    deserializeHexStrToPublicKey(s: string): PublicKey;
-
-    deserializeHexStrToSignature(s: string): Signature;
-
-    SecretKey: SecretKey;
-    PublicKey: PublicKey;
-
-}
+export const SecretKey: typeof SecretKeyType;
+export const PublicKey: typeof PublicKeyType;
+export const Signature: typeof SignatureType;

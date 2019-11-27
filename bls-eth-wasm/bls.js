@@ -464,7 +464,6 @@
       return r
     }
     exports.blsInit()
-    console.log('finished')
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)

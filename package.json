@@ -1,9 +1,13 @@
 {
-  "name": "eth2-bls-wasm",
+  "name": "@chainsafe/eth2-bls-wasm",
   "version": "0.0.1",
   "description": "BLS signature by WebAssembly",
-  "main": "bls-eth-wasm/bls.js",
-  "types": "./bls-wasm/bls.d.ts",
+  "main": "./bls-eth-wasm/bls.js",
+  "types": "./bls-eth-wasm/bls.d.ts",
+  "contributors": [
+    "herumi <herumi@nifty.com> (https://github.com/herumi/)",
+    "Chainsafe Systems"
+  ],
   "files": [
     "bls-eth-wasm"
   ],
