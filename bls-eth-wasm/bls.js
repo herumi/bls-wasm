@@ -182,6 +182,9 @@
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
 
+    exports.shouldVerifyBlsSignatureOrder = _wrapInput(mod._blsSignatureVerifyOrder, 0);
+    exports.shouldVerifyBlsPublicKeyOrder = _wrapInput(mod._blsPublicKeyVerifyOrder, 0);
+
     mod.blsSecretKeySerialize = _wrapSerialize(mod._blsSecretKeySerialize)
     mod.blsPublicKeySerialize = _wrapSerialize(mod._blsPublicKeySerialize)
     mod.blsSignatureSerialize = _wrapSerialize(mod._blsSignatureSerialize)

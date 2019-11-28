@@ -77,6 +77,8 @@ export function toHexStr(a: Uint8Array): string;
 export function fromHexStr(s: string): Uint8Array;
 export function getCurveOrder(): string;
 export function getFieldOrder(): string;
+export function shouldVerifyBlsSignatureOrder(b: string): void;
+export function shouldVerifyBlsPublicKeyOrder(b: string): void;
 export function deserializeHexStrToSecretKey(s: string): SecretKeyType;
 export function deserializeHexStrToPublicKey(s: string): PublicKeyType;
 export function deserializeHexStrToSignature(s: string): SignatureType;
