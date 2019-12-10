@@ -1,3 +1,5 @@
+import wasmCode from './bls_c.wasm';
+
 (generator => {
   if (typeof exports === 'object') {
     const crypto = require('crypto')
@@ -485,31 +487,27 @@
     exports.curveType = exports.BLS12_381
     const name = 'bls_c'
     return new Promise(resolve => {
-      if (isNodeJs) {
-        const path = require('path')
-        const js = require(`./${name}.js`)
+      const wasmBinary = Buffer.from(wasmCode, "binary");
+      try {
+        const js = require("./".concat(name, ".js"));
+
         const Module = {
-          cryptoGetRandomValues : _cryptoGetRandomValues,
-          locateFile: baseName => { return path.join(__dirname, baseName) }
+          cryptoGetRandomValues: _cryptoGetRandomValues,
+          wasmBinary: wasmBinary,
+        };
+        js(Module).then(_mod => {
+          exports.mod = _mod;
+          setup(exports, exports.curveType);
+          resolve();
+        });
+      } catch (e) {
+        exports.mod = Module()
+        exports.mod.cryptoGetRandomValues = _cryptoGetRandomValues
+        exports.mod.wasmBinary = wasmBinary;
+        exports.mod.onRuntimeInitialized = () => {
+          setup(exports, exports.curveType)
+          resolve()
         }
-        js(Module)
-          .then(_mod => {
-            exports.mod = _mod
-            setup(exports, exports.curveType)
-            resolve()
-          })
-      } else {
-        fetch(`./${name}.wasm`) // eslint-disable-line
-          .then(response => response.arrayBuffer())
-          .then(buffer => new Uint8Array(buffer))
-          .then(() => {
-            exports.mod = Module() // eslint-disable-line
-            exports.mod.cryptoGetRandomValues = _cryptoGetRandomValues
-            exports.mod.onRuntimeInitialized = () => {
-              setup(exports, exports.curveType)
-              resolve()
-            }
-          })
       }
     })
   }
