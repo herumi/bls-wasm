@@ -1,6 +1,6 @@
 {
   "name": "@chainsafe/eth2-bls-wasm",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "BLS signature by WebAssembly",
   "main": "./dist/bls.js",
   "types": "./dist/bls.d.ts",
