@@ -1,4 +1,12 @@
 language: node_js
 node_js:
   - "8"
-script: npm run test
+script:
+  - mkdir emsdk
+  - cd emsdk
+  - curl -fsSL -O https://raw.githubusercontent.com/derhuerst/install-emsdk/master/install-emsdk.sh
+  - ./install-emsdk.sh .
+  - source ./emsdk_env.sh
+  - cd ..
+  - yarn run build
+  - yarn run test
