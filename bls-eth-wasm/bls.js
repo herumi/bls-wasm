@@ -178,6 +178,8 @@ import wasmCode from './bls_c.wasm';
 
     // change curveType
     exports.blsInit = () => {
+      //use new spec
+      mod._blsSetETHmode(1);
       const r = mod._blsInit(exports.BLS12_381, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
@@ -194,6 +196,11 @@ import wasmCode from './bls_c.wasm';
     mod.blsSecretKeyDeserialize = _wrapDeserialize(mod._blsSecretKeyDeserialize)
     mod.blsPublicKeyDeserialize = _wrapDeserialize(mod._blsPublicKeyDeserialize)
     mod.blsSignatureDeserialize = _wrapDeserialize(mod._blsSignatureDeserialize)
+
+    mod.blsPublicKeySerializeUncompressed = _wrapSerialize(mod._blsPublicKeySerializeUncompressed)
+    mod.blsSignatureSerializeUncompressed = _wrapSerialize(mod._blsSignatureSerializeUncompressed)
+    mod.blsPublicKeyDeserializeUncompressed = _wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
+    mod.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
 
     mod.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
     mod.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
@@ -392,8 +399,20 @@ import wasmCode from './bls_c.wasm';
       deserialize (s) {
         this._setter(mod.blsPublicKeyDeserialize, s)
       }
+      deserializeUncompressed (s) {
+        this._setter(mod.blsPublicKeyDeserializeUncompressed, s)
+      }
       serialize () {
         return this._getter(mod.blsPublicKeySerialize)
+      }
+      serializeUncompressed () {
+        return this._getter(mod.blsPublicKeySerializeUncompressed)
+      }
+      deserializeUncompressedHexStr (s) {
+        this.deserializeUncompressed(exports.fromHexStr(s))
+      }
+      serializeUncompressedToHexStr () {
+        return exports.toHexStr(this.serializeUncompressed())
       }
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
@@ -430,6 +449,11 @@ import wasmCode from './bls_c.wasm';
       r.deserializeHexStr(s)
       return r
     }
+    exports.deserializeUncompressedHexStrToPublicKey = s => {
+      const r = new exports.PublicKey()
+      r.deserializeUncompressedHexStr(s)
+      return r
+    }
 
     exports.Signature = class extends Common {
       constructor () {
@@ -441,8 +465,20 @@ import wasmCode from './bls_c.wasm';
       deserialize (s) {
         this._setter(mod.blsSignatureDeserialize, s)
       }
+      deserializeUncompressed (s) {
+        this._setter(mod.blsSignatureDeserializeUncompressed, s)
+      }
       serialize () {
         return this._getter(mod.blsSignatureSerialize)
+      }
+      serializeUncompressed () {
+        return this._getter(mod.blsSignatureSerializeUncompressed)
+      }
+      deserializeUncompressedHexStr (s) {
+        this.deserializeUncompressed(exports.fromHexStr(s))
+      }
+      serializeUncompressedToHexStr () {
+        return exports.toHexStr(this.serializeUncompressed())
       }
       add (rhs) {
         this._update(mod._blsSignatureAdd, rhs)

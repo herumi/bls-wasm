@@ -1,5 +1,5 @@
 'use strict'
-const bls = require('./bls-eth-wasm/bls.js')
+const bls = require('./dist/bls.js')
 const assert = require('assert')
 const { performance } = require('perf_hooks')
 
@@ -9,9 +9,12 @@ const curveTest = (curveType, name) => {
       try {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
         aggTest()
+        serializeTest()
+        serializeUncompressedTest()
+        signatureTest()
         console.log('all ok')
       } catch (e) {
-        console.log(`TEST FAIL ${e}`)
+        console.log(e)
         assert(false)
       }
     })
@@ -31,6 +34,13 @@ function serializeSubTest (t, Cstr) {
   assert.deepEqual(t.serialize(), t2.serialize())
 }
 
+function serializeUncompressedSubTest (t, Cstr) {
+  const s = t.serializeUncompressedToHexStr()
+  const t2 = new Cstr()
+  t2.deserializeUncompressedHexStr(s)
+  assert.deepEqual(t.serialize(), t2.serialize())
+}
+
 function serializeTest () {
   const sec = new bls.SecretKey()
   sec.setByCSPRNG()
@@ -40,9 +50,16 @@ function serializeTest () {
   const msg = 'abc'
   const sig = sec.sign(msg)
   serializeSubTest(sig, bls.Signature)
-  const id = new bls.Id()
-  id.setStr('12345')
-  serializeSubTest(id, bls.Id)
+}
+
+function serializeUncompressedTest () {
+  const sec = new bls.SecretKey()
+  sec.setByCSPRNG()
+  const pub = sec.getPublicKey()
+  serializeUncompressedSubTest(pub, bls.PublicKey)
+  const msg = 'abc'
+  const sig = sec.sign(msg)
+  serializeUncompressedSubTest(sig, bls.Signature)
 }
 
 function signatureTest () {

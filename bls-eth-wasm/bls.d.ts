@@ -50,6 +50,10 @@ declare class PublicKeyType extends Common {
 
     verify(signature: SignatureType, m: Uint8Array | string): boolean;
 
+    deserializeUncompressed (s: Uint8Array): void;
+    serializeUncompressed (): Uint8Array;
+    deserializeUncompressedHexStr (s:string): void;
+    serializeUncompressedToHexStr(): string;
     /**
      *
      * @param signature
@@ -61,6 +65,10 @@ declare class PublicKeyType extends Common {
 declare class SignatureType extends Common {
     constructor();
 
+    deserializeUncompressed (s: Uint8Array): void;
+    serializeUncompressed (): Uint8Array;
+    deserializeUncompressedHexStr (s:string): void;
+    serializeUncompressedToHexStr(): string;
     /**
      *
      * @param publicKeys
