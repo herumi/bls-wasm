@@ -5,6 +5,7 @@ script:
   - mkdir emsdk
   - cd emsdk
   - curl -fsSL -O https://raw.githubusercontent.com/derhuerst/install-emsdk/master/install-emsdk.sh
+  - chmod a+x ./install-emsdk.sh
   - ./install-emsdk.sh .
   - source ./emsdk_env.sh
   - cd ..
