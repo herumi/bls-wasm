@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## 0.3.0 (unreleased)
+## 0.3.0 (2020-02-03)
 
 Features:
 
