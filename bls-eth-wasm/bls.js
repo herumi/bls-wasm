@@ -178,6 +178,8 @@ import wasmCode from './bls_c.wasm';
 
     // change curveType
     exports.blsInit = () => {
+      //use new spec
+      mod._blsSetETHmode(1);
       const r = mod._blsInit(exports.BLS12_381, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }

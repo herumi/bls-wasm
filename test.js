@@ -1,5 +1,5 @@
 'use strict'
-const bls = require('./bls-eth-wasm/bls.js')
+const bls = require('./dist/bls.js')
 const assert = require('assert')
 const { performance } = require('perf_hooks')
 
