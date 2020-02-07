@@ -69,6 +69,10 @@ declare class SignatureType extends Common {
     serializeUncompressed (): Uint8Array;
     deserializeUncompressedHexStr (s:string): void;
     serializeUncompressedToHexStr(): string;
+    isValidOrder(): boolean;
+    aggregate(others: SignatureType[]): boolean;
+    aggregateVerifyNoCheck(publicKeys: PublicKeyType[], messages: Uint8Array): boolean;
+    fastAggregateVerify(publicKeys: PublicKeyType[], message: Uint8Array): boolean;
     /**
      *
      * @param publicKeys
@@ -85,6 +89,15 @@ export function toHexStr(a: Uint8Array): string;
 export function fromHexStr(s: string): Uint8Array;
 export function getCurveOrder(): string;
 export function getFieldOrder(): string;
+export function verifySignatureOrder(doVerify: boolean): void;
+export function verifyPublicKeyOrder(doVerify: boolean): void;
+
+/**
+ *
+ * @param msgs single array with concatenated messages
+ * @param msgSize defaults to MSG_SIZE
+ */
+export function areAllMsgDifferent(msgs: Uint8Array, msgSize?: number): boolean;
 export function shouldVerifyBlsSignatureOrder(b: string): void;
 export function shouldVerifyBlsPublicKeyOrder(b: string): void;
 export function deserializeHexStrToSecretKey(s: string): SecretKeyType;

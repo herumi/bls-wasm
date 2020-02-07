@@ -1,6 +1,6 @@
 [submodule "bls"]
 	path = bls
-	url = https://github.com/mpetrunic/bls
+	url = https://github.com/herumi/bls.git
 [submodule "mcl"]
 	path = mcl
 	url = https://github.com/herumi/mcl.git
