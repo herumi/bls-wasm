@@ -24,7 +24,7 @@ import wasmCode from './bls_c.wasm';
     const BLS_SECRETKEY_SIZE = MCLBN_FP_UNIT_SIZE * 8
     const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3
     const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * 2
-    const MSG_SIZE = 40
+    const MSG_SIZE = 32
     exports.MSG_SIZE = MSG_SIZE
 
     const _malloc = size => {
@@ -162,7 +162,7 @@ import wasmCode from './bls_c.wasm';
     }
     const callRecover = (func, a, size, vec, idVec) => {
       const n = vec.length
-      if (n != idVec.length) throw ('recover:bad length')
+      if (n !== idVec.length) throw ('recover:bad length')
       const secPos = a._alloc()
       const vecPos = _malloc(size * n)
       const idVecPos = _malloc(BLS_ID_SIZE * n)
@@ -178,10 +178,12 @@ import wasmCode from './bls_c.wasm';
 
     // change curveType
     exports.blsInit = () => {
-      //use new spec
-      mod._blsSetETHmode(1);
       const r = mod._blsInit(exports.BLS12_381, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
+
+      //use new spec
+      const r2 = mod._blsSetETHmode(1);
+      if (r2) throw ('blsSetEthMode err ' + r2)
     }
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
@@ -414,6 +416,9 @@ import wasmCode from './bls_c.wasm';
       serializeUncompressedToHexStr () {
         return exports.toHexStr(this.serializeUncompressed())
       }
+      isValidOrder () {
+        return this._getter(mod._blsPublicKeyIsValidOrder)
+      }
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
       }
@@ -480,6 +485,9 @@ import wasmCode from './bls_c.wasm';
       serializeUncompressedToHexStr () {
         return exports.toHexStr(this.serializeUncompressed())
       }
+      isValidOrder () {
+        return this._getter(mod._blsSignatureIsValidOrder)
+      }
       add (rhs) {
         this._update(mod._blsSignatureAdd, rhs)
       }
@@ -487,28 +495,81 @@ import wasmCode from './bls_c.wasm';
         callRecover(mod._blsSignatureRecover, this, BLS_SIGNATURE_SIZE, secVec, idVec)
       }
       // this = aggSig
-      verifyAggregatedHashWithDomain (pubVec, msgVec) {
-        if (pubVec.length !== msgVec.length) throw new Error('bad length')
+      aggregate (sigVec) {
+        const n = sigVec.length
+        const aggSigPos = this._allocAndCopy()
+        const sigVecPos = _malloc(BLS_SIGNATURE_SIZE * n)
+        for (let i = 0; i < n; i++) {
+          mod.HEAP32.set(sigVec[i].a_, (sigVecPos + BLS_SIGNATURE_SIZE * i) / 4)
+        }
+        const r = mod._blsAggregateSignature(aggSigPos, sigVecPos, n)
+        _free(sigVecPos)
+        this._saveAndFree(aggSigPos)
+        return r === 1
+      }
+
+      // this = aggSig
+      fastAggregateVerify (pubVec, msg) {
         const n = pubVec.length
-        if (n === 0) return false
+        const msgSize = msg.length
         const aggSigPos = this._allocAndCopy()
         const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
-        const msgVecPos = _malloc(MSG_SIZE * n)
+        const msgPos = _malloc(msgSize)
         for (let i = 0; i < n; i++) {
           mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
-          mod.HEAP8.set(msgVec[i], msgVecPos + MSG_SIZE * i)
         }
-        const r = mod._blsVerifyAggregatedHashWithDomain(aggSigPos, pubVecPos, msgVecPos, n)
-        _free(msgVecPos)
+        mod.HEAP8.set(msg, msgPos)
+        const r = mod._blsFastAggregateVerify(aggSigPos, pubVecPos, n, msgPos, msgSize)
+        _free(msgPos)
         _free(pubVecPos)
         _free(aggSigPos)
-        return r !== 0
+        return r === 1
+      }
+
+      // this = aggSig
+      // msgVec = (32 * pubVec.length)-size Uint8Array
+      aggregateVerifyNoCheck (pubVec, msgVec) {
+        const n = pubVec.length
+        if (n === 0 || msgVec.length !== MSG_SIZE * n) {
+          return false
+        }
+        const aggSigPos = this._allocAndCopy()
+        const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
+        const msgPos = _malloc(msgVec.length)
+        for (let i = 0; i < n; i++) {
+          mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
+        }
+        mod.HEAP8.set(msgVec, msgPos)
+        const r = mod._blsAggregateVerifyNoCheck(aggSigPos, pubVecPos, msgPos, MSG_SIZE, n)
+        _free(msgPos)
+        _free(pubVecPos)
+        _free(aggSigPos)
+        return r === 1
       }
     }
     exports.deserializeHexStrToSignature = s => {
       const r = new exports.Signature()
       r.deserializeHexStr(s)
       return r
+    }
+    // make setter check the correctness of the order if doVerify
+    exports.verifySignatureOrder = (doVerify) => {
+      mod._blsSignatureVerifyOrder(doVerify)
+    }
+    // make setter check the correctness of the order if doVerify
+    exports.verifyPublicKeyOrder = (doVerify) => {
+      mod._blsPublicKeyVerifyOrder(doVerify)
+    }
+    exports.areAllMsgDifferent = (msgs, msgSize = MSG_SIZE) => {
+      const n = msgs.length / msgSize
+      if (msgs.length !== n * msgSize) return false
+      const h = {}
+      for (let i = 0; i < n; i++) {
+        const m = msgs.subarray(i * msgSize, (i + 1) * msgSize)
+        if (m in h) return false
+        h[m] = true
+      }
+      return true
     }
     exports.blsInit()
   } // setup()
@@ -547,5 +608,6 @@ import wasmCode from './bls_c.wasm';
       }
     })
   }
+
   return exports
 })
