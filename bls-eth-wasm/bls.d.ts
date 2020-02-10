@@ -49,7 +49,7 @@ declare class PublicKeyType extends Common {
     constructor();
 
     verify(signature: SignatureType, m: Uint8Array | string): boolean;
-
+    isValidOrder(): boolean;
     deserializeUncompressed (s: Uint8Array): void;
     serializeUncompressed (): Uint8Array;
     deserializeUncompressedHexStr (s:string): void;
