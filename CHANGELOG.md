@@ -1,5 +1,25 @@
 # CHANGELOG.md
 
+## 0.4.0 (2020-02-11)
+
+###Added:
+- PublicKey.isValidOrder
+- Signature.isValidOrder
+- Signature.aggregate
+- Signature.aggregateVerifyNoCheck
+- Signature.fastAggregateVerify
+- verifySignatureOrder
+- verifyPublicKeyOrder
+- areAllMsgDifferent
+
+###Bugfixes:
+- msg sizes changed to 32
+- changed order of lib initialization
+
+###Other:
+- bls submodule changed to herumi's
+
+
 ## 0.3.0 (2020-02-03)
 
 Features:
