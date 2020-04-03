@@ -1,14 +1,11 @@
 (generator => {
   if (typeof exports === 'object') {
-    const crypto = require('crypto')
-    crypto.getRandomValues = crypto.randomFillSync
-    generator(exports, crypto, true)
+    generator(exports, true)
   } else {
-    const crypto = window.crypto || window.msCrypto
     const exports = {}
-    window.bls = generator(exports, crypto, false)
+    window.bls = generator(exports, false)
   }
-})((exports, crypto, isNodeJs) => {
+})((exports, isNodeJs) => {
   /* eslint-disable */
   exports.BN254 = 0
   exports.BN381_1 = 1
@@ -349,7 +346,7 @@
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_ID_SIZE)
-        crypto.getRandomValues(a)
+        exports.getRandomValues(a)
         this.setLittleEndian(a)
       }
     }
@@ -395,7 +392,7 @@
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_SECRETKEY_SIZE)
-        crypto.getRandomValues(a)
+        exports.getRandomValues(a)
         this.setLittleEndian(a)
       }
       getPublicKey () {
@@ -495,16 +492,22 @@
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)
-    crypto.getRandomValues(a)
+    exports.getRandomValues(a)
     for (let i = 0; i < n; i++) {
       exports.mod.HEAP8[p + i] = a[i]
     }
+  }
+  // f(a:array) fills a with random value
+  exports.setRandFunc = f => {
+    exports.getRandomValues = f
   }
   exports.init = (curveType = exports.BN254) => {
     exports.curveType = curveType
     const name = 'bls_c'
     return new Promise(resolve => {
       if (isNodeJs) {
+        const crypto = require('crypto')
+        exports.getRandomValues = crypto.randomFillSync
         const path = require('path')
         const js = require(`./${name}.js`)
         const Module = {
@@ -518,6 +521,8 @@
             resolve()
           })
       } else {
+        const crypto = window.crypto || window.msCrypto
+        exports.getRandomValues = x => crypto.getRandomValues(x)
         fetch(`./${name}.wasm`) // eslint-disable-line
           .then(response => response.arrayBuffer())
           .then(buffer => new Uint8Array(buffer))
