@@ -293,9 +293,8 @@
         const xPos = this._allocAndCopy()
         const yPos = y._allocAndCopy()
         func(xPos, yPos)
-        this._saveAndFree(xPos)
         _free(yPos)
-        _free(xPos)
+        this._saveAndFree(xPos)
       }
     }
 
