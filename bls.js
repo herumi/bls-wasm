@@ -10,19 +10,18 @@
   exports.BN254 = 0
   exports.BN381_1 = 1
   exports.BLS12_381 = 5
+  exports.ethMode = false
 
   const setup = (exports, curveType) => {
     const mod = exports.mod
-    const ethMode = false
-    const defaultCurve = ethMode ? exports.BLS12_381 : exports.BN254
     const MCLBN_FP_UNIT_SIZE = 6
-    const MCLBN_FR_UNIT_SIZE = ethMode ? 4 : 6
-    const BLS_COMPILER_TIME_VAR_ADJ = ethMode ? 200 : 0
+    const MCLBN_FR_UNIT_SIZE = exports.ethMode ? 4 : 6
+    const BLS_COMPILER_TIME_VAR_ADJ = exports.ethMode ? 200 : 0
     const MCLBN_COMPILED_TIME_VAR = (MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE) + BLS_COMPILER_TIME_VAR_ADJ
     const BLS_ID_SIZE = MCLBN_FR_UNIT_SIZE * 8
     const BLS_SECRETKEY_SIZE = MCLBN_FP_UNIT_SIZE * 8
-    const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3 * (ethMode ? 1 : 2)
-    const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * (ethMode ? 2 : 1)
+    const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 1 : 2)
+    const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 2 : 1)
     const MSG_SIZE = 40
     exports.MSG_SIZE = MSG_SIZE
 
@@ -176,7 +175,7 @@
     }
 
     // change curveType
-    exports.blsInit = (curveType = exports.BLS12_381) => {
+    exports.blsInit = (curveType = exports.ethMode ? exports.BLS12_381 : exports.BN254) => {
       const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
