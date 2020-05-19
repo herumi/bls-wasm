@@ -11,6 +11,9 @@
   exports.BN381_1 = 1
   exports.BLS12_381 = 5
   exports.ethMode = false
+  exports.ETH_MODE_DRAFT_05 = 1
+  exports.ETH_MODE_DRAFT_06 = 2
+  exports.ETH_MODE_DRAFT_07 = 3
 
   const setup = (exports, curveType) => {
     const mod = exports.mod
@@ -182,31 +185,31 @@
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
 
-    mod.blsIdSetDecStr = _wrapInput(mod._blsIdSetDecStr, 1)
-    mod.blsIdSetHexStr = _wrapInput(mod._blsIdSetHexStr, 1)
-    mod.blsIdGetDecStr = _wrapGetStr(mod._blsIdGetDecStr)
-    mod.blsIdGetHexStr = _wrapGetStr(mod._blsIdGetHexStr)
+    exports.blsIdSetDecStr = _wrapInput(mod._blsIdSetDecStr, 1)
+    exports.blsIdSetHexStr = _wrapInput(mod._blsIdSetHexStr, 1)
+    exports.blsIdGetDecStr = _wrapGetStr(mod._blsIdGetDecStr)
+    exports.blsIdGetHexStr = _wrapGetStr(mod._blsIdGetHexStr)
 
-    mod.blsIdSerialize = _wrapSerialize(mod._blsIdSerialize)
-    mod.blsSecretKeySerialize = _wrapSerialize(mod._blsSecretKeySerialize)
-    mod.blsPublicKeySerialize = _wrapSerialize(mod._blsPublicKeySerialize)
-    mod.blsSignatureSerialize = _wrapSerialize(mod._blsSignatureSerialize)
+    exports.blsIdSerialize = _wrapSerialize(mod._blsIdSerialize)
+    exports.blsSecretKeySerialize = _wrapSerialize(mod._blsSecretKeySerialize)
+    exports.blsPublicKeySerialize = _wrapSerialize(mod._blsPublicKeySerialize)
+    exports.blsSignatureSerialize = _wrapSerialize(mod._blsSignatureSerialize)
 
-    mod.blsIdDeserialize = _wrapDeserialize(mod._blsIdDeserialize)
-    mod.blsSecretKeyDeserialize = _wrapDeserialize(mod._blsSecretKeyDeserialize)
-    mod.blsPublicKeyDeserialize = _wrapDeserialize(mod._blsPublicKeyDeserialize)
-    mod.blsSignatureDeserialize = _wrapDeserialize(mod._blsSignatureDeserialize)
+    exports.blsIdDeserialize = _wrapDeserialize(mod._blsIdDeserialize)
+    exports.blsSecretKeyDeserialize = _wrapDeserialize(mod._blsSecretKeyDeserialize)
+    exports.blsPublicKeyDeserialize = _wrapDeserialize(mod._blsPublicKeyDeserialize)
+    exports.blsSignatureDeserialize = _wrapDeserialize(mod._blsSignatureDeserialize)
 
-    mod.blsPublicKeySerializeUncompressed = _wrapSerialize(mod._blsPublicKeySerializeUncompressed)
-    mod.blsSignatureSerializeUncompressed = _wrapSerialize(mod._blsSignatureSerializeUncompressed)
-    mod.blsPublicKeyDeserializeUncompressed = _wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
-    mod.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
+    exports.blsPublicKeySerializeUncompressed = _wrapSerialize(mod._blsPublicKeySerializeUncompressed)
+    exports.blsSignatureSerializeUncompressed = _wrapSerialize(mod._blsSignatureSerializeUncompressed)
+    exports.blsPublicKeyDeserializeUncompressed = _wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
+    exports.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
 
-    mod.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
-    mod.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
-    mod.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
-    mod.blsSign = _wrapInput(mod._blsSign, 2)
-    mod.blsVerify = _wrapInput(mod._blsVerify, 2, true)
+    exports.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
+    exports.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
+    exports.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
+    exports.blsSign = _wrapInput(mod._blsSign, 2)
+    exports.blsVerify = _wrapInput(mod._blsVerify, 2, true)
 
     class Common {
       constructor (size) {
@@ -308,18 +311,18 @@
         return this._isEqual(mod._blsIdIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(mod.blsIdDeserialize, s)
+        this._setter(exports.blsIdDeserialize, s)
       }
       serialize () {
-        return this._getter(mod.blsIdSerialize)
+        return this._getter(exports.blsIdSerialize)
       }
       setStr (s, base = 10) {
         switch (base) {
           case 10:
-            this._setter(mod.blsIdSetDecStr, s)
+            this._setter(exports.blsIdSetDecStr, s)
             return
           case 16:
-            this._setter(mod.blsIdSetHexStr, s)
+            this._setter(exports.blsIdSetHexStr, s)
             return
           default:
             throw ('BlsId.setStr:bad base:' + base)
@@ -328,18 +331,18 @@
       getStr (base = 10) {
         switch (base) {
           case 10:
-            return this._getter(mod.blsIdGetDecStr)
+            return this._getter(exports.blsIdGetDecStr)
           case 16:
-            return this._getter(mod.blsIdGetHexStr)
+            return this._getter(exports.blsIdGetHexStr)
           default:
             throw ('BlsId.getStr:bad base:' + base)
         }
       }
       setLittleEndian (s) {
-        this._setter(mod.blsSecretKeySetLittleEndian, s)
+        this._setter(exports.blsSecretKeySetLittleEndian, s)
       }
       setLittleEndianMod (s) {
-        this._setter(mod.blsSecretKeySetLittleEndianMod, s)
+        this._setter(exports.blsSecretKeySetLittleEndianMod, s)
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_ID_SIZE)
@@ -364,10 +367,10 @@
         return this._isEqual(mod._blsSecretKeyIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(mod.blsSecretKeyDeserialize, s)
+        this._setter(exports.blsSecretKeyDeserialize, s)
       }
       serialize () {
-        return this._getter(mod.blsSecretKeySerialize)
+        return this._getter(exports.blsSecretKeySerialize)
       }
       add (rhs) {
         this._update(mod._blsSecretKeyAdd, rhs)
@@ -379,13 +382,13 @@
         callRecover(mod._blsSecretKeyRecover, this, BLS_SECRETKEY_SIZE, secVec, idVec)
       }
       setHashOf (s) {
-        this._setter(mod.blsHashToSecretKey, s)
+        this._setter(exports.blsHashToSecretKey, s)
       }
       setLittleEndian (s) {
-        this._setter(mod.blsSecretKeySetLittleEndian, s)
+        this._setter(exports.blsSecretKeySetLittleEndian, s)
       }
       setLittleEndianMod (s) {
-        this._setter(mod.blsSecretKeySetLittleEndianMod, s)
+        this._setter(exports.blsSecretKeySetLittleEndianMod, s)
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_SECRETKEY_SIZE)
@@ -411,7 +414,7 @@
         const sig = new exports.Signature()
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
-        mod.blsSign(sigPos, secPos, m)
+        exports.blsSign(sigPos, secPos, m)
         sig._saveAndFree(sigPos)
         _free(secPos)
         return sig
@@ -450,16 +453,16 @@
         return this._isEqual(mod._blsPublicKeyIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(mod.blsPublicKeyDeserialize, s)
+        this._setter(exports.blsPublicKeyDeserialize, s)
       }
       serialize () {
-        return this._getter(mod.blsPublicKeySerialize)
+        return this._getter(exports.blsPublicKeySerialize)
       }
       deserializeUncompressed (s) {
-        this._setter(mod.blsPublicKeyDeserializeUncompressed, s)
+        this._setter(exports.blsPublicKeyDeserializeUncompressed, s)
       }
       serializeUncompressed () {
-        return this._getter(mod.blsPublicKeySerializeUncompressed)
+        return this._getter(exports.blsPublicKeySerializeUncompressed)
       }
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
@@ -476,7 +479,7 @@
       verify (sig, m) {
         const pubPos = this._allocAndCopy()
         const sigPos = sig._allocAndCopy()
-        const r = mod.blsVerify(sigPos, pubPos, m)
+        const r = exports.blsVerify(sigPos, pubPos, m)
         _free(sigPos)
         _free(pubPos)
         return r != 0
@@ -508,16 +511,16 @@
         return this._isEqual(mod._blsSignatureIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(mod.blsSignatureDeserialize, s)
+        this._setter(exports.blsSignatureDeserialize, s)
       }
       serialize () {
-        return this._getter(mod.blsSignatureSerialize)
+        return this._getter(exports.blsSignatureSerialize)
       }
       deserializeUncompressed (s) {
-        this._setter(mod.blsSignatureDeserializeUncompressed, s)
+        this._setter(exports.blsSignatureDeserializeUncompressed, s)
       }
       serializeUncompressed () {
-        return this._getter(mod.blsSignatureSerializeUncompressed)
+        return this._getter(exports.blsSignatureSerializeUncompressed)
       }
       add (rhs) {
         this._update(mod._blsSignatureAdd, rhs)
@@ -603,9 +606,9 @@
       r.deserializeHexStr(s)
       return r
     }
-    // 0 (draft-05) 1 (draft-06)
+    // 1 (draft-05) 2 (draft-06) 3 (draft-07)
     exports.setETHmode = (mode) => {
-      mod._blsSetETHmode(mode)
+      if (mod._blsSetETHmode(mode) != 0) throw new Error(`bad setETHmode ${mode}`)
     }
     // make setter check the correctness of the order if doVerify
     exports.verifySignatureOrder = (doVerify) => {
