@@ -8,11 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - update to bls draft v7 (eth2 0.12.x spec support)
 
-## [0.4.0] (2020-02-03)
+## 0.4.0 (2020-02-11)
 
-- update to bls draft v5 (eth2 0.11.x spec support)
+###Added:
+- PublicKey.isValidOrder
+- Signature.isValidOrder
+- Signature.aggregate
+- Signature.aggregateVerifyNoCheck
+- Signature.fastAggregateVerify
+- verifySignatureOrder
+- verifyPublicKeyOrder
+- areAllMsgDifferent
 
-## [0.3.0] (2020-02-03)
+###Bugfixes:
+- msg sizes changed to 32
+- changed order of lib initialization
+
+###Other:
+- bls submodule changed to herumi's
+
+
+## 0.3.0 (2020-02-03)
 
 Features:
 
