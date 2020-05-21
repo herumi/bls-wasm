@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - update to bls draft v7 (eth2 0.12.x spec support)
 
-## 0.4.0 (2020-02-11)
+## [0.4.0] (2020-02-11)
 
 ###Added:
 - PublicKey.isValidOrder
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - bls submodule changed to herumi's
 
 
-## 0.3.0 (2020-02-03)
+## [0.3.0] (2020-02-03)
 
 Features:
 
