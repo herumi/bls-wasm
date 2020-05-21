@@ -181,8 +181,8 @@ import wasmCode from './bls_c.wasm';
       const r = mod._blsInit(exports.BLS12_381, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
 
-      //use new spec
-      const r2 = mod._blsSetETHmode(1);
+      //https://github.com/herumi/bls/blob/master/include/bls/bls.h#L106
+      const r2 = mod._blsSetETHmode(3);
       if (r2) throw ('blsSetEthMode err ' + r2)
     }
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
