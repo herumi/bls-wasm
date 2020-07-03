@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/herumi/bls-wasm.png)](https://travis-ci.org/herumi/bls-wasm)
+![ES Version](https://img.shields.io/badge/ES-2015-yellow)
+![Node Version](https://img.shields.io/badge/node-10.x-green)
+
 # BLS signature for Node.js and Web by WebAssembly
 
 # Abstract
