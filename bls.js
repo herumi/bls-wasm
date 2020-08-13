@@ -1,9 +1,9 @@
 (generator => {
-  if (typeof exports === 'object') {
-    generator(exports, true)
-  } else {
+  if (typeof window === 'object') {
     const exports = {}
     window.bls = generator(exports, false)
+  } else {
+    generator(exports, true)
   }
 })((exports, isNodeJs) => {
   /* eslint-disable */
@@ -25,8 +25,6 @@
     const BLS_SECRETKEY_SIZE = MCLBN_FP_UNIT_SIZE * 8
     const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 1 : 2)
     const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 2 : 1)
-    const MSG_SIZE = 40
-    exports.MSG_SIZE = MSG_SIZE
 
     const _malloc = size => {
       return mod._blsMalloc(size)
@@ -363,6 +361,9 @@
       setInt (x) {
         this._setter(mod._blsIdSetInt, x) // same as Id
       }
+      isZero () {
+        return this._getter(mod._blsSecretKeyIsZero) === 1
+      }
       isEqual (rhs) {
         return this._isEqual(mod._blsSecretKeyIsEqual, rhs)
       }
@@ -419,25 +420,6 @@
         _free(secPos)
         return sig
       }
-      /*
-        input
-        m : message (40 bytes Uint8Array)
-        return
-        BlsSignature
-      */
-      signHashWithDomain (m) {
-        if (m.length != MSG_SIZE) throw new Error(`bad size message:${m.length}`)
-        const sig = new exports.Signature()
-        const secPos = this._allocAndCopy()
-        const sigPos = sig._alloc()
-        const mPos = _malloc(MSG_SIZE)
-        mod.HEAP8.set(m, mPos)
-        mod._blsSignHashWithDomain(sigPos, secPos, mPos)
-        _free(mPos)
-        sig._saveAndFree(sigPos)
-        _free(secPos)
-        return sig
-      }
     }
     exports.deserializeHexStrToSecretKey = s => {
       const r = new exports.SecretKey()
@@ -448,6 +430,9 @@
     exports.PublicKey = class extends Common {
       constructor () {
         super(BLS_PUBLICKEY_SIZE)
+      }
+      isZero () {
+        return this._getter(mod._blsPublicKeyIsZero) === 1
       }
       isEqual (rhs) {
         return this._isEqual(mod._blsPublicKeyIsEqual, rhs)
@@ -484,18 +469,6 @@
         _free(pubPos)
         return r != 0
       }
-      verifyHashWithDomain (sig, m) {
-        if (m.length != MSG_SIZE) return false
-        const pubPos = this._allocAndCopy()
-        const sigPos = sig._allocAndCopy()
-        const mPos = _malloc(MSG_SIZE)
-        mod.HEAP8.set(m, mPos)
-        const r = mod._blsVerifyHashWithDomain(sigPos, pubPos, mPos)
-        _free(mPos)
-        _free(sigPos)
-        _free(pubPos)
-        return r != 0
-      }
     }
     exports.deserializeHexStrToPublicKey = s => {
       const r = new exports.PublicKey()
@@ -506,6 +479,9 @@
     exports.Signature = class extends Common {
       constructor () {
         super(BLS_SIGNATURE_SIZE)
+      }
+      isZero () {
+        return this._getter(mod._blsSignatureIsZero) === 1
       }
       isEqual (rhs) {
         return this._isEqual(mod._blsSignatureIsEqual, rhs)
@@ -530,24 +506,6 @@
       }
       isValidOrder () {
         return this._getter(mod._blsSignatureIsValidOrder)
-      }
-      // this = aggSig
-      verifyAggregatedHashWithDomain (pubVec, msgVec) {
-        if (pubVec.length != msgVec.length) throw new Error('bad length')
-        const n = pubVec.length
-        if (n == 0) return false
-        const aggSigPos = this._allocAndCopy()
-        const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
-        const msgVecPos = _malloc(MSG_SIZE * n)
-        for (let i = 0; i < n; i++) {
-          mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
-          mod.HEAP8.set(msgVec[i], msgVecPos + MSG_SIZE * i)
-        }
-        const r = mod._blsVerifyAggregatedHashWithDomain(aggSigPos, pubVecPos, msgVecPos, n)
-        _free(msgVecPos)
-        _free(pubVecPos)
-        _free(aggSigPos)
-        return r != 0
       }
       // this = aggSig
       aggregate (sigVec) {
@@ -630,6 +588,9 @@
       return true
     }
     exports.blsInit(curveType)
+    if (exports.ethMode) {
+      exports.setETHmode(exports.ETH_MODE_DRAFT_07)
+    }
   } // setup()
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)
