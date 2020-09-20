@@ -7,3 +7,6 @@
 [submodule "mcl-wasm"]
 	path = mcl-wasm
 	url = https://github.com/herumi/mcl-wasm.git
+[submodule "bls-eth-wasm"]
+	path = bls-eth-wasm
+	url = https://github.com/herumi/bls-eth-wasm.git
