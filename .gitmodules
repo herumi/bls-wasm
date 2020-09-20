@@ -4,3 +4,6 @@
 [submodule "mcl"]
 	path = mcl
 	url = https://github.com/herumi/mcl.git
+[submodule "mcl-wasm"]
+	path = mcl-wasm
+	url = https://github.com/herumi/mcl-wasm.git
