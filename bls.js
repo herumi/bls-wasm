@@ -73,9 +73,10 @@
 //    }
     }
     const copyFromUint32Array = (pos, a) => {
-      for (let i = 0; i < a.length; i++) {
-        mod.HEAP32[pos / 4 + i] = a[i]
-      }
+      mod.HEAP32.set(a, pos / 4)
+//    for (let i = 0; i < a.length; i++) {
+//      mod.HEAP32[pos / 4 + i] = a[i]
+//    }
     }
 //////////////////////////////////
     const _wrapGetStr = (func, returnAsStr = true) => {
@@ -169,10 +170,11 @@
         copyFromUint32Array(vecPos + size * i, vec[i].a_)
         copyFromUint32Array(idVecPos + BLS_ID_SIZE * i, idVec[i].a_)
       }
-      func(secPos, vecPos, idVecPos, n)
+      const r = func(secPos, vecPos, idVecPos, n)
       _free(idVecPos)
       _free(vecPos)
       a._saveAndFree(secPos)
+      if (r) throw ('callRecover')
     }
 
     // change curveType
@@ -586,6 +588,38 @@
         h[m] = true
       }
       return true
+    }
+    /*
+      return true if all pub[i].verify(sigs[i], msgs[i])
+      msgs is array of 32-byte Uint8Array
+    */
+    exports.multiVerify = (pubs, sigs, msgs) => {
+      const MSG_SIZE = 32
+      const RAND_SIZE = 8 // 64-bit rand
+      const threadNum = 0 // not used
+      const n = sigs.length
+      if (pubs.length != n || msgs.length != n) return false
+      for (let i = 0; i < n; i++) {
+        if (msgs[i].length != MSG_SIZE) return false
+      }
+      const sigPos = _malloc(BLS_SIGNATURE_SIZE * n)
+      const pubPos = _malloc(BLS_PUBLICKEY_SIZE * n)
+      const msgPos = _malloc(MSG_SIZE * n)
+      const randPos = _malloc(RAND_SIZE * n)
+
+      exports.getRandomValues(mod.HEAP8.subarray(randPos, randPos + RAND_SIZE * n))
+      for (let i = 0; i < n; i++) {
+        mod.HEAP32.set(sigs[i].a_, (sigPos + BLS_SIGNATURE_SIZE * i) / 4)
+        mod.HEAP32.set(pubs[i].a_, (pubPos + BLS_PUBLICKEY_SIZE * i) / 4)
+        mod.HEAP8.set(msgs[i], msgPos + MSG_SIZE * i)
+      }
+      const r = mod._blsMultiVerify(sigPos, pubPos, msgPos, MSG_SIZE, randPos, RAND_SIZE, n, threadNum)
+
+      _free(randPos)
+      _free(msgPos)
+      _free(pubPos)
+      _free(sigPos)
+      return r == 1
     }
     exports.blsInit(curveType)
     if (exports.ethMode) {
