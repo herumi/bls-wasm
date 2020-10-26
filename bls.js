@@ -227,6 +227,11 @@
       clear () {
         this.a_.fill(0)
       }
+      clone () {
+        const copy = new this.constructor()
+        copy.a_ = this.a_.slice(0)
+        return copy
+      }
       // alloc new array
       _alloc () {
         return _malloc(this.a_.length * 4)
@@ -581,7 +586,7 @@
     exports.areAllMsgDifferent = (msgs, msgSize) => {
       const n = msgs.length / msgSize
       if (msgs.length != n * msgSize) return false
-      h = {}
+      const h = {}
       for (let i = 0; i < n; i++) {
         const m = msgs.subarray(i * msgSize, (i + 1) * msgSize)
         if (m in h) return false
