@@ -7,7 +7,19 @@
 - see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/bls-demo.html)
 
 ## for Node.js
-node test.js
+```
+node test/test.js
+```
+
+## for browser
+
+Include `browser/bls.js`
+
+## for React
+
+```
+const bls = require('bls-wasm/browser')
+```
 
 # License
 
@@ -16,4 +28,7 @@ http://opensource.org/licenses/BSD-3-Clause
 
 # Author
 
-光成滋生 MITSUNARI Shigeo(herumi@nifty.com)
+MITSUNARI Shigeo(herumi@nifty.com)
+
+# Sponsors welcome
+[GitHub Sponsor](https://github.com/sponsors/herumi)

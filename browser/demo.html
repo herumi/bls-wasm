@@ -3,22 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>BLS signature sample</title>
-<link rel="stylesheet" href="style.css" type="text/css">
-<script type='text/javascript' src="./bls_c.js"></script>
 <script type='text/javascript' src="./bls.js"></script>
-<script type='text/javascript' src="./bls-demo.js"></script>
-</script>
+<script type='text/javascript' src="./demo.js"></script>
 </head>
 <body>
 <p>
-<form name="selectCurve">
-pairing parameter : <select name="curveType" onChange="onChangeSelectCurve()">
-<option value="0" selected>Fp254BNb</option>
-<option value="1">Fp382_1</option>
-<option value="5">BLS12_381</option>
-</select>
+pairing parameter : BLS12_381
 library status <span name="status">initializing...</span>
-</form>
 <div>group order : <span name="curveOrder">0</span></div>
 </p>
 <button type="text" id="benchmark" onclick="onClickBenchmark()">benchmark</button>

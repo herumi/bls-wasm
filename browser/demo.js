@@ -3,24 +3,11 @@ function setValue (name, val) { document.getElementsByName(name)[0].value = val 
 function getText (name) { return document.getElementsByName(name)[0].innerText }
 function setText (name, val) { document.getElementsByName(name)[0].innerText = val }
 
-bls.init()
+bls.init(bls.BLS12_381)
   .then(() => {
     setText('status', 'ok')
     setText('curveOrder', bls.getCurveOrder())
   })
-
-let prevSelectedCurve = -1
-function onChangeSelectCurve () {
-  const obj = document.selectCurve.curveType
-  const idx = obj.selectedIndex
-  const curve = obj.options[idx].value
-  if (curve === prevSelectedCurve) return
-  prevSelectedCurve = curve
-  console.log('idx=' + idx)
-  const r = bls.blsInit(idx)
-  setText('status', r ? 'err:' + r : 'ok')
-  setText('curveOrder', bls.getCurveOrder())
-}
 
 function rand (val) {
   const x = new bls.Id()

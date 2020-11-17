@@ -1,5 +1,5 @@
 'use strict'
-const bls = require('./bls.js')
+const bls = require('../src/index.js')
 const assert = require('assert')
 const { performance } = require('perf_hooks')
 
@@ -25,7 +25,6 @@ const curveTest = (curveType, name) => {
 async function curveTestAll () {
   // can't parallel
   await curveTest(bls.BN254, 'BN254')
-  await curveTest(bls.BN381_1, 'BN381_1')
   await curveTest(bls.BLS12_381, 'BLS12_381')
 }
 

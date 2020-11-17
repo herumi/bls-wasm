@@ -1,30 +1,33 @@
-(generator => {
-  if (typeof window === 'object') {
-    const exports = {}
-    window.bls = generator(exports, false)
-  } else {
-    generator(exports, true)
-  }
-})((exports, isNodeJs) => {
+/**
+ * @param createModule Async factory that returns an emcc initialized Module
+ * In node, `const createModule = require(`./bls_c.js`)`
+ * @param getRandomValues Function to get crypto quality random values
+ */
+const ETH_MODE = false
+
+const _blsSetupFactory = (createModule, getRandomValues) => {
+  const exports = {}
   /* eslint-disable */
   exports.BN254 = 0
   exports.BN381_1 = 1
   exports.BLS12_381 = 5
-  exports.ethMode = false
+  exports.ethMode = ETH_MODE
   exports.ETH_MODE_DRAFT_05 = 1
   exports.ETH_MODE_DRAFT_06 = 2
   exports.ETH_MODE_DRAFT_07 = 3
 
-  const setup = (exports, curveType) => {
+  function blsSetup(exports, curveType) {
     const mod = exports.mod
     const MCLBN_FP_UNIT_SIZE = 6
-    const MCLBN_FR_UNIT_SIZE = exports.ethMode ? 4 : 6
+    const MCLBN_FP_SIZE = MCLBN_FP_UNIT_SIZE * 8
+    const MCLBN_FR_UNIT_SIZE = 4
+    const MCLBN_FR_SIZE = MCLBN_FR_UNIT_SIZE * 8
     const BLS_COMPILER_TIME_VAR_ADJ = exports.ethMode ? 200 : 0
     const MCLBN_COMPILED_TIME_VAR = (MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE) + BLS_COMPILER_TIME_VAR_ADJ
-    const BLS_ID_SIZE = MCLBN_FR_UNIT_SIZE * 8
-    const BLS_SECRETKEY_SIZE = MCLBN_FP_UNIT_SIZE * 8
-    const BLS_PUBLICKEY_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 1 : 2)
-    const BLS_SIGNATURE_SIZE = BLS_SECRETKEY_SIZE * 3 * (exports.ethMode ? 2 : 1)
+    const BLS_ID_SIZE = MCLBN_FR_SIZE
+    const BLS_SECRETKEY_SIZE = MCLBN_FR_SIZE
+    const BLS_PUBLICKEY_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 1 : 2)
+    const BLS_SIGNATURE_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 2 : 1)
 
     const _malloc = size => {
       return mod._blsMalloc(size)
@@ -182,6 +185,15 @@
       const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
+    exports.mclBnFr_setLittleEndian = _wrapInput(mod._mclBnFr_setLittleEndian, 1)
+    exports.mclBnFr_setLittleEndianMod = _wrapInput(mod._mclBnFr_setLittleEndianMod, 1)
+    exports.mclBnFr_setBigEndianMod = _wrapInput(mod._mclBnFr_setBigEndianMod, 1)
+    exports.mclBnFr_setStr = _wrapInput(mod._mclBnFr_setStr, 1)
+    exports.mclBnFr_getStr = _wrapGetStr(mod._mclBnFr_getStr)
+    exports.mclBnFr_deserialize = _wrapDeserialize(mod._mclBnFr_deserialize)
+    exports.mclBnFr_serialize = _wrapSerialize(mod._mclBnFr_serialize)
+    exports.mclBnFr_setHashOf = _wrapInput(mod._mclBnFr_setHashOf, 1)
+
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
 
@@ -303,6 +315,58 @@
         _free(yPos)
         this._saveAndFree(xPos)
       }
+    }
+
+    exports.Fr = class extends Common {
+      constructor () {
+        super(MCLBN_FR_SIZE)
+      }
+      setInt (x) {
+        this._setter(mod._mclBnFr_setInt32, x)
+      }
+      deserialize (s) {
+        this._setter(exports.mclBnFr_deserialize, s)
+      }
+      serialize () {
+        return this._getter(exports.mclBnFr_serialize)
+      }
+      setStr (s, base = 0) {
+        this._setter(exports.mclBnFr_setStr, s, base)
+      }
+      getStr (base = 0) {
+        return this._getter(exports.mclBnFr_getStr, base)
+      }
+      isZero () {
+        return this._getter(mod._mclBnFr_isZero) === 1
+      }
+      isOne () {
+        return this._getter(mod._mclBnFr_isOne) === 1
+      }
+      isEqual (rhs) {
+        return this._isEqual(mod._mclBnFr_isEqual, rhs)
+      }
+      setLittleEndian (s) {
+        this._setter(exports.mclBnFr_setLittleEndian, s)
+      }
+      setLittleEndianMod (s) {
+        this._setter(exports.mclBnFr_setLittleEndianMod, s)
+      }
+      setBigEndianMod (s) {
+        this._setter(exports.mclBnFr_setBigEndianMod, s)
+      }
+      setByCSPRNG () {
+        const a = new Uint8Array(MCLBN_FR_SIZE)
+        exports.getRandomValues(a)
+        this.setLittleEndian(a)
+      }
+      setHashOf (s) {
+        this._setter(exports.mclBnFr_setHashOf, s)
+      }
+    }
+    exports.deserializeHexStrToFr = s => {
+      const r = new exports.Fr()
+      r.deserializeHexStr(s)
+      return r
     }
 
     exports.Id = class extends Common {
@@ -630,7 +694,61 @@
     if (exports.ethMode) {
       exports.setETHmode(exports.ETH_MODE_DRAFT_07)
     }
-  } // setup()
+    exports.neg = x => {
+      if (x instanceof exports.Fr) {
+        return x._op1(mod._mclBnFr_neg)
+      }
+      throw new Error('neg:bad type')
+    }
+    exports.sqr = x => {
+      if (x instanceof exports.Fr) {
+        return x._op1(mod._mclBnFr_sqr)
+      }
+      throw new Error('sqr:bad type')
+    }
+    exports.inv = x => {
+      if (x instanceof exports.Fr) {
+        return x._op1(mod._mclBnFr_inv)
+      }
+      throw new Error('inv:bad type')
+    }
+    exports.add = (x, y) => {
+      if (x.constructor !== y.constructor) throw new Error('add:mismatch type')
+      if (x instanceof exports.Fr) {
+        return x._op2(mod._mclBnFr_add, y)
+      }
+      throw new Error('add:bad type')
+    }
+    exports.sub = (x, y) => {
+      if (x.constructor !== y.constructor) throw new Error('sub:mismatch type')
+      if (x instanceof exports.Fr) {
+        return x._op2(mod._mclBnFr_sub, y)
+      }
+      throw new Error('sub:bad type')
+    }
+    /*
+      Fr * Fr
+    */
+    exports.mul = (x, y) => {
+      if (x instanceof exports.Fr && y instanceof exports.Fr) {
+        return x._op2(mod._mclBnFr_mul, y)
+      }
+      throw new Error('mul:mismatch type')
+    }
+    exports.div = (x, y) => {
+      if (x.constructor !== y.constructor) throw new Error('div:mismatch type')
+      if (x instanceof exports.Fr) {
+        return x._op2(mod._mclBnFr_div, y)
+      }
+      throw new Error('div:bad type')
+    }
+    exports.hashToFr = s => {
+      const x = new exports.Fr()
+      x.setHashOf(s)
+      return x
+    }
+  } // blsSetup()
+
   const _cryptoGetRandomValues = function(p, n) {
     const a = new Uint8Array(n)
     exports.getRandomValues(a)
@@ -642,41 +760,15 @@
   exports.setRandFunc = f => {
     exports.getRandomValues = f
   }
-  exports.init = (curveType = exports.BN254) => {
+  exports.init = async (curveType = exports.ethMode ? exports.BLS12_381 : exports.BN254) => {
     exports.curveType = curveType
-    const name = 'bls_c'
-    return new Promise(resolve => {
-      if (isNodeJs) {
-        const crypto = require('crypto')
-        exports.getRandomValues = crypto.randomFillSync
-        const path = require('path')
-        const js = require(`./${name}.js`)
-        const Module = {
-          cryptoGetRandomValues : _cryptoGetRandomValues,
-          locateFile: baseName => { return path.join(__dirname, baseName) }
-        }
-        js(Module)
-          .then(_mod => {
-            exports.mod = _mod
-            setup(exports, curveType)
-            resolve()
-          })
-      } else {
-        const crypto = window.crypto || window.msCrypto
-        exports.getRandomValues = x => crypto.getRandomValues(x)
-        fetch(`./${name}.wasm`) // eslint-disable-line
-          .then(response => response.arrayBuffer())
-          .then(buffer => new Uint8Array(buffer))
-          .then(() => {
-            exports.mod = Module() // eslint-disable-line
-            exports.mod.cryptoGetRandomValues = _cryptoGetRandomValues
-            exports.mod.onRuntimeInitialized = () => {
-              setup(exports, curveType)
-              resolve()
-            }
-          })
-      }
+    exports.getRandomValues = getRandomValues
+    exports.mod = await createModule({
+      cryptoGetRandomValues: _cryptoGetRandomValues,
     })
+    blsSetup(exports, curveType)
   }
   return exports
-})
+}
+
+module.exports = _blsSetupFactory
