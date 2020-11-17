@@ -3,8 +3,9 @@
 
 # Abstract
 
+- Fr : SecretKey, G2 : PublicKey, G1 : Signature
 - see [bls-eth-wasm](https://github.com/herumi/bls-eth-wasm) if you need Ethereum 2.0 compatible sign/verify.
-- see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/bls-demo.html)
+- see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/browser/demo.html)
 
 ## for Node.js
 ```
