@@ -7,6 +7,13 @@
 - see [bls-eth-wasm](https://github.com/herumi/bls-eth-wasm) if you need Ethereum 2.0 compatible sign/verify.
 - see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/browser/demo.html)
 
+## How to use
+The version `v0.4.2` breaks backward compatibility of the entry point.
+
+- Node.js : `const bls = require('bls-wasm')`
+- React : `const bls = require('bls-wasm/browser')`
+- HTML : `<script src="https://herumi.github.io/bls-wasm/browser/bls.js"></script>`
+
 ## for Node.js
 ```
 node test/test.js
