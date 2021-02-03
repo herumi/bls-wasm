@@ -10,12 +10,14 @@ const curveTest = (curveType, name) => {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
         serializeTest()
         signatureTest()
+        blindTest()
         miscTest()
         shareTest()
         addTest()
         console.log('all ok')
         benchAll()
       } catch (e) {
+        console.log(e.stack)
         console.log(`TEST FAIL ${e}`)
         assert(false)
       }
@@ -49,6 +51,22 @@ function serializeTest () {
   const id = new bls.Id()
   id.setStr('12345')
   serializeSubTest(id, bls.Id)
+}
+
+function blindTest() {
+  const sec = new bls.SecretKey()
+  const blinder = new bls.SecretKey()
+  sec.setByCSPRNG();
+  blinder.setByCSPRNG();
+
+  const pub = sec.getPublicKey();
+  const msg = 'doremifa';
+
+  const blindedSig = blinder.sign(msg)
+  const sig = sec.blindSign(blindedSig, false)
+  const unblindedSig = blinder.blindSign(sig, true)
+  console.log(typeof unblindedSig)
+  assert(pub.verify(unblindedSig, msg)) 
 }
 
 function signatureTest () {

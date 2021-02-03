@@ -221,6 +221,7 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     exports.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
     exports.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
     exports.blsSign = _wrapInput(mod._blsSign, 2)
+    exports.blsBlindSignatureSign = _wrapInput(mod._blsBlindSignatureSign, 3)
     exports.blsVerify = _wrapInput(mod._blsVerify, 2, true)
 
     class Common {
@@ -487,6 +488,17 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
         exports.blsSign(sigPos, secPos, m)
+        sig._saveAndFree(sigPos)
+        _free(secPos)
+        return sig
+      }
+      blindSign(origSig, inverse) {
+        const sig = new exports.Signature()
+        const secPos = this._allocAndCopy()
+        const sigPos = sig._alloc()
+        const origSigSerialized = origSig.serialize()
+        console.log('origSigSerialized: ', origSigSerialized)
+        exports.blsBlindSignatureSign(sigPos, secPos, inverse ? 1 : 0, origSigSerialized)
         sig._saveAndFree(sigPos)
         _free(secPos)
         return sig
