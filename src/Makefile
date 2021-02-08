@@ -4,6 +4,7 @@ EMCC_OPT=-I ./bls/include -I ./mcl/src -I ./mcl/include -I./bls
 #EMCC_OPT+=-DBLS_ETH
 EMCC_OPT+=-Wall -Wextra
 EMCC_OPT+=-O3 -DNDEBUG
+EMCC_OPT+=-DMCL_SIZEOF_UNIT=4
 EMCC_OPT+=-fno-exceptions
 EMCC_OPT+=-DMCLBN_FORCE_EXPORT
 EMCC_OPT+=-DMCL_MAX_BIT_SIZE=384
