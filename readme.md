@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.com/herumi/bls-wasm.svg?branch=master)](https://travis-ci.com/github/herumi/bls-wasm)
+[![Build Status](https://github.com/herumi/bls-wasm/actions/workflows/main.yml/badge.svg)](https://github.com/herumi/bls-wasm/actions/workflows/main.yml)
 
 # BLS signature for Node.js by WebAssembly
 
