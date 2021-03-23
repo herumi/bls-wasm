@@ -216,13 +216,15 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     exports.blsSignatureSerializeUncompressed = _wrapSerialize(mod._blsSignatureSerializeUncompressed)
     exports.blsPublicKeyDeserializeUncompressed = _wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
     exports.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
-
+    
     exports.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
     exports.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
     exports.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
+    exports.blsHashToSignature = _wrapInput(mod._blsHashToSignature, 1)
     exports.blsSign = _wrapInput(mod._blsSign, 2)
     exports.blsBlindSignatureSign = _wrapInput(mod._blsBlindSignatureSign, 3)
     exports.blsVerify = _wrapInput(mod._blsVerify, 2, true)
+    exports.blsVerifyBlind = _wrapInput(mod._blsVerifyBlind, 2, true)
 
     class Common {
       constructor (size) {
@@ -497,7 +499,6 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
         const secPos = this._allocAndCopy()
         const sigPos = sig._alloc()
         const origSigSerialized = origSig.serialize()
-        console.log('origSigSerialized: ', origSigSerialized)
         exports.blsBlindSignatureSign(sigPos, secPos, inverse ? 1 : 0, origSigSerialized)
         sig._saveAndFree(sigPos)
         _free(secPos)
@@ -552,6 +553,16 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
         _free(pubPos)
         return r != 0
       }
+
+      verifyBlind (sig, point) {
+        const pubPos = this._allocAndCopy()
+        const sigPos = sig._allocAndCopy()
+        const pointSerialized = point.serialize()
+        const r = exports.blsVerifyBlind(sigPos, pubPos, pointSerialized)
+        _free(sigPos)
+        _free(pubPos)
+        return r != 0
+      }
     }
     exports.deserializeHexStrToPublicKey = s => {
       const r = new exports.PublicKey()
@@ -572,6 +583,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       deserialize (s) {
         this._setter(exports.blsSignatureDeserialize, s)
       }
+      setHashOf (s) {
+        this._setter(exports.blsHashToSignature, s)
+      }
       serialize () {
         return this._getter(exports.blsSignatureSerialize)
       }
@@ -583,6 +597,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       }
       add (rhs) {
         this._update(mod._blsSignatureAdd, rhs)
+      }
+      sub (rhs) {
+        this._update(mod._blsSignatureSub, rhs)
       }
       recover (secVec, idVec) {
         callRecover(mod._blsSignatureRecover, this, BLS_SIGNATURE_SIZE, secVec, idVec)

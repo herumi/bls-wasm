@@ -3,4 +3,4 @@
 	url = https://github.com/herumi/mcl
 [submodule "src/bls"]
 	path = src/bls
-	url = https://github.com/herumi/bls
+	url = https://github.com/zippiehq/bls
