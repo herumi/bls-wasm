@@ -33,7 +33,7 @@
   "author": "Carsten Munk (fork owner) <carsten@zippie.com>",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/herumi/bls-wasm/issues"
+    "url": "https://github.com/zippiehq/bls-wasm/issues"
   },
-  "homepage": "https://github.com/herumi/bls-wasm#readme"
+  "homepage": "https://github.com/zippiehq/bls-wasm#readme"
 }
