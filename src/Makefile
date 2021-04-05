@@ -1,7 +1,7 @@
 all: bls_c.js
 
 EMCC_OPT=-I ./bls/include -I ./mcl/src -I ./mcl/include -I./bls
-#EMCC_OPT+=-DBLS_ETH
+EMCC_OPT+=-DBLS_ETH
 EMCC_OPT+=-Wall -Wextra
 EMCC_OPT+=-O3 -DNDEBUG
 EMCC_OPT+=-fno-exceptions

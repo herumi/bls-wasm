@@ -3,7 +3,7 @@
  * In node, `const createModule = require(`./bls_c.js`)`
  * @param getRandomValues Function to get crypto quality random values
  */
-const ETH_MODE = false
+const ETH_MODE = true
 
 const _blsSetupFactory = (createModule, getRandomValues) => {
   const exports = {}
