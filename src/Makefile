@@ -1,6 +1,8 @@
 all: bls_c.js
+BLS_DIR?=./bls
+MCL_DIR?=$(BLS_DIR)/mcl
 
-EMCC_OPT=-I ./bls/include -I ./mcl/src -I ./mcl/include -I./bls
+EMCC_OPT=-I $(BLS_DIR)/include -I $(MCL_DIR)/src -I $(MCL_DIR)/include -I./bls
 #EMCC_OPT+=-DBLS_ETH
 EMCC_OPT+=-Wall -Wextra
 EMCC_OPT+=-O3 -DNDEBUG
@@ -25,7 +27,7 @@ EMCC_OPT+=-s ABORTING_MALLOC=0
 EMCC_OPT+=-s DISABLE_EXCEPTION_CATCHING=1
 
 bls_c.js:
-	emcc -o $@ bls/src/bls_c384_256.cpp mcl/src/fp.cpp $(EMCC_OPT)
+	emcc -o $@ $(BLS_DIR)/src/bls_c384_256.cpp $(MCL_DIR)/src/fp.cpp $(EMCC_OPT)
 	# disable require fs, path
 	perl -i -pe 's@(.* = require\(.*)@//\1@' $@
 
