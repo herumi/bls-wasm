@@ -1,8 +1,9 @@
 {
   "name": "@zippie/bls-wasm",
-  "version": "0.4.4",
+  "version": "0.5.0",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "test": "node test/test.js"
   },
