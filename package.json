@@ -1,11 +1,13 @@
 {
-  "name": "bls-wasm",
-  "version": "0.4.5",
+  "name": "bls-eth-wasm",
+  "version": "0.4.6",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "scripts": {
     "test": "node test/test.js"
   },
+  "types": "src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/herumi/bls-wasm.git"
@@ -16,19 +18,14 @@
     "pairing"
   ],
   "files": [
-    "src/Makefile",
+    "package.json",
     "src/index.js",
     "src/bls.js",
     "src/bls_c.js",
+    "src/index.d.ts",
     "browser/bls.js",
-    "browser/demo.html",
-    "browser/demo.js",
-    "browser/package-lock.json",
     "browser/package.json",
-    "browser/readme.md",
-    "browser/src/index-browser.js",
-    "browser/webpack.config.js",
-    "test/test.js"
+    "browser/src/index-browser.js"
   ],
   "author": "herumi <herumi@nifty.com> (https://github.com/herumi/)",
   "license": "BSD-3-Clause",
