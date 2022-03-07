@@ -536,8 +536,8 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
       }
-      share (msk, id) {
-        callShare(mod._blsPublicKeyShare, this, BLS_PUBLICKEY_SIZE, msk, id)
+      share (mpk, id) {
+        callShare(mod._blsPublicKeyShare, this, BLS_PUBLICKEY_SIZE, mpk, id)
       }
       recover (secVec, idVec) {
         callRecover(mod._blsPublicKeyRecover, this, BLS_PUBLICKEY_SIZE, secVec, idVec)
