@@ -673,6 +673,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     exports.setETHmode = (mode) => {
       if (mod._blsSetETHmode(mode) != 0) throw new Error(`bad setETHmode ${mode}`)
     }
+    exports.setETHserialiation = (enable) => {
+      mod._mclBn_setETHserialization(enable ? 1 : 0)
+    }
     // make setter check the correctness of the order if doVerify
     exports.verifySignatureOrder = (doVerify) => {
       mod._blsSignatureVerifyOrder(doVerify)
