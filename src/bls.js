@@ -194,6 +194,11 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     exports.mclBnFr_serialize = _wrapSerialize(mod._mclBnFr_serialize)
     exports.mclBnFr_setHashOf = _wrapInput(mod._mclBnFr_setHashOf, 1)
 
+    exports.mclBnG1_setStr = _wrapInput(mod._mclBnG1_setStr, 1)
+    exports.mclBnG1_getStr = _wrapGetStr(mod._mclBnG1_getStr)
+    exports.mclBnG2_setStr = _wrapInput(mod._mclBnG2_setStr, 1)
+    exports.mclBnG2_getStr = _wrapGetStr(mod._mclBnG2_getStr)
+
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
 
@@ -514,6 +519,14 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       serialize () {
         return this._getter(exports.blsPublicKeySerialize)
       }
+      setStr (s, base = 0) {
+        const func = ETH_MODE ? exports.mclBnG1_setStr : exports.mclBnG2_setStr
+        this._setter(func, s, base)
+      }
+      getStr (base = 0) {
+        const func = ETH_MODE ? exports.mclBnG1_getStr : exports.mclBnG2_getStr
+        return this._getter(func, base)
+      }
       deserializeUncompressed (s) {
         this._setter(exports.blsPublicKeyDeserializeUncompressed, s)
       }
@@ -546,6 +559,19 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       r.deserializeHexStr(s)
       return r
     }
+    exports.setGeneratorOfPublicKey = pub => {
+      const pubPos = pub._allocAndCopy()
+      const r = mod._blsSetGeneratorOfPublicKey(pubPos)
+      _free(pubPos)
+      if (r !== 0) throw new Error('bad public key')
+    }
+    exports.getGeneratorofPublicKey = () => {
+      const pub = new exports.PublicKey()
+      const pubPos = _malloc(BLS_SIGNATURE_SIZE)
+      mod._blsGetGeneratorOfPublicKey(pubPos)
+      pub._saveAndFree(pubPos)
+      return pub
+    }
 
     exports.Signature = class extends Common {
       constructor () {
@@ -565,6 +591,14 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       }
       deserializeUncompressed (s) {
         this._setter(exports.blsSignatureDeserializeUncompressed, s)
+      }
+      setStr (s, base = 0) {
+        const func = ETH_MODE ? exports.mclBnG2_setStr : exports.mclBnG1_setStr
+        this._setter(func, s, base)
+      }
+      getStr (base = 0) {
+        const func = ETH_MODE ? exports.mclBnG2_getStr : exports.mclBnG1_getStr
+        return this._getter(func, base)
       }
       serializeUncompressed () {
         return this._getter(exports.blsSignatureSerializeUncompressed)
