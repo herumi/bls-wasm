@@ -1,6 +1,6 @@
 {
   "name": "bls-wasm",
-  "version": "0.4.8",
+  "version": "1.0.0",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
   "types": "src/index.d.ts",
