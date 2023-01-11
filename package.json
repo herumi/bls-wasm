@@ -1,5 +1,5 @@
 {
-  "name": "bls-wasm",
+  "name": "@multiversx/sdk-bls-wasm",
   "version": "0.3.1",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "bls.js",
@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/herumi/bls-wasm.git"
+    "url": "git+https://github.com/multiversx/bls-wasm.git"
   },
   "keywords": [
     "BLS signature",
