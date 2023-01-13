@@ -1,6 +1,6 @@
 const createModule = require('../../src/bls_c.js')
 const blsSetupFactory = require('../../src/bls.js')
-const crypto = window.crypto || window.msCrypto
+const crypto = self.crypto
 
 const getRandomValues = x => crypto.getRandomValues(x)
 const bls = blsSetupFactory(createModule, getRandomValues)
