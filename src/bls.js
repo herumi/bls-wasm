@@ -15,6 +15,8 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
   exports.ETH_MODE_DRAFT_05 = 1
   exports.ETH_MODE_DRAFT_06 = 2
   exports.ETH_MODE_DRAFT_07 = 3
+  exports.MAP_TO_MODE_ORIGINAL = 0
+  exports.MAP_TO_MODE_HASH_TO_CURVE = 5 // IRTF
 
   function blsSetup(exports, curveType) {
     const mod = exports.mod
@@ -201,6 +203,8 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
 
     exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
     exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
+    exports.setDstG1 = _wrapInput(mod._mclBnG1_setDst, 0)
+    exports.setDstG2 = _wrapInput(mod._mclBnG2_setDst, 0)
 
     exports.blsIdSetDecStr = _wrapInput(mod._blsIdSetDecStr, 1)
     exports.blsIdSetHexStr = _wrapInput(mod._blsIdSetHexStr, 1)
@@ -675,6 +679,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     }
     exports.setETHserialiation = (enable) => {
       mod._mclBn_setETHserialization(enable ? 1 : 0)
+    }
+    exports.setMapToMode = (mode) => {
+      if (mod._mclBn_setMapToMode(mode) != 0) throw new Error(`bad setMapToMode ${mode}`)
     }
     // make setter check the correctness of the order if doVerify
     exports.verifySignatureOrder = (doVerify) => {
