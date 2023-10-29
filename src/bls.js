@@ -188,6 +188,7 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       if (r) throw ('blsInit err ' + r)
     }
     exports.mclBnFr_setLittleEndian = _wrapInput(mod._mclBnFr_setLittleEndian, 1)
+    exports.mclBnFr_getLittleEndian = _wrapGetStr(mod._mclBnFr_getLittleEndian)
     exports.mclBnFr_setLittleEndianMod = _wrapInput(mod._mclBnFr_setLittleEndianMod, 1)
     exports.mclBnFr_setBigEndianMod = _wrapInput(mod._mclBnFr_setBigEndianMod, 1)
     exports.mclBnFr_setStr = _wrapInput(mod._mclBnFr_setStr, 1)
@@ -227,6 +228,7 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
     exports.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
 
     exports.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
+    exports.blsSecretKeyGetLittleEndian = _wrapGetStr(mod._blsSecretKeyGetLittleEndian)
     exports.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
     exports.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
     exports.blsSign = _wrapInput(mod._blsSign, 2)
@@ -357,6 +359,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       setLittleEndian (s) {
         this._setter(exports.mclBnFr_setLittleEndian, s)
       }
+      getLittleEndian () {
+        return this._getter(exports.mclBnFr_getLittleEndian)
+      }
       setLittleEndianMod (s) {
         this._setter(exports.mclBnFr_setLittleEndianMod, s)
       }
@@ -419,6 +424,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       setLittleEndian (s) {
         this._setter(exports.blsSecretKeySetLittleEndian, s)
       }
+      getLittleEndian () {
+        return this._getter(exports.blsSecretKeyGetLittleEndian)
+      }
       setLittleEndianMod (s) {
         this._setter(exports.blsSecretKeySetLittleEndianMod, s)
       }
@@ -467,6 +475,9 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
       }
       setLittleEndian (s) {
         this._setter(exports.blsSecretKeySetLittleEndian, s)
+      }
+      getLittleEndian () {
+        return this._getter(exports.blsSecretKeyGetLittleEndian)
       }
       setLittleEndianMod (s) {
         this._setter(exports.blsSecretKeySetLittleEndianMod, s)
