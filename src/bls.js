@@ -1,11 +1,10 @@
 /**
  * @param createModule Async factory that returns an emcc initialized Module
  * In node, `const createModule = require(`./bls_c.js`)`
- * @param getRandomValues Function to get crypto quality random values
  */
 const ETH_MODE = false
 
-const _blsSetupFactory = (createModule, getRandomValues) => {
+const _blsSetupFactory = (createModule) => {
   const exports = {}
   /* eslint-disable */
   exports.BN254 = 0
@@ -809,7 +808,7 @@ const _blsSetupFactory = (createModule, getRandomValues) => {
   }
   exports.init = async (curveType = exports.ethMode ? exports.BLS12_381 : exports.BN254) => {
     exports.curveType = curveType
-    exports.getRandomValues = getRandomValues
+    exports.getRandomValues = crypto.getRandomValues.bind(crypto)
     exports.mod = await createModule({
       cryptoGetRandomValues: _cryptoGetRandomValues,
     })
