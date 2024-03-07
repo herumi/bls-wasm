@@ -1,6 +1,6 @@
 {
   "name": "bls-wasm",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
   "scripts": {
@@ -23,8 +23,7 @@
     "src/bls_c.js",
     "src/index.d.ts",
     "browser/bls.js",
-    "browser/package.json",
-    "browser/src/index-browser.js"
+    "browser/package.json"
   ],
   "author": "herumi <herumi@nifty.com> (https://github.com/herumi/)",
   "license": "BSD-3-Clause",
