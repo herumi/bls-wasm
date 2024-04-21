@@ -9,6 +9,7 @@ const _blsSetupFactory = (createModule) => {
   /* eslint-disable */
   exports.BN254 = 0
   exports.BN381_1 = 1
+  exports.BN_SNARK1 = 4
   exports.BLS12_381 = 5
   exports.ethMode = ETH_MODE
   exports.ETH_MODE_DRAFT_05 = 1
