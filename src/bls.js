@@ -569,12 +569,16 @@ const _blsSetupFactory = (createModule) => {
       _free(pubPos)
       if (r !== 0) throw new Error('bad public key')
     }
-    exports.getGeneratorofPublicKey = () => {
+    exports.getGeneratorOfPublicKey = () => {
       const pub = new exports.PublicKey()
       const pubPos = _malloc(BLS_SIGNATURE_SIZE)
       mod._blsGetGeneratorOfPublicKey(pubPos)
       pub._saveAndFree(pubPos)
       return pub
+    }
+    exports.getGeneratorofPublicKey = () => {
+      console.log('WARNING : getGeneratorofPublicKey is renamed to getGeneratorOfPublicKey')
+      return exports.getGeneratorOfPublicKey()
     }
 
     exports.Signature = class extends Common {
