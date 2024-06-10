@@ -9,6 +9,7 @@ const _blsSetupFactory = (createModule) => {
   /* eslint-disable */
   exports.BN254 = 0
   exports.BN381_1 = 1
+  exports.BN_SNARK1 = 4
   exports.BLS12_381 = 5
   exports.ethMode = ETH_MODE
   exports.ETH_MODE_DRAFT_05 = 1
@@ -568,12 +569,16 @@ const _blsSetupFactory = (createModule) => {
       _free(pubPos)
       if (r !== 0) throw new Error('bad public key')
     }
-    exports.getGeneratorofPublicKey = () => {
+    exports.getGeneratorOfPublicKey = () => {
       const pub = new exports.PublicKey()
       const pubPos = _malloc(BLS_SIGNATURE_SIZE)
       mod._blsGetGeneratorOfPublicKey(pubPos)
       pub._saveAndFree(pubPos)
       return pub
+    }
+    exports.getGeneratorofPublicKey = () => {
+      console.log('WARNING : getGeneratorofPublicKey is renamed to getGeneratorOfPublicKey')
+      return exports.getGeneratorOfPublicKey()
     }
 
     exports.Signature = class extends Common {
