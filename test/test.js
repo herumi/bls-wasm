@@ -10,6 +10,7 @@ const curveTest = (curveType, name) => {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
         serializeTest()
         signatureTest()
+        opTest()
         miscTest()
         shareTest()
         addTest()
@@ -69,6 +70,45 @@ function signatureTest () {
   sig.dump('signature ')
 
   assert(pub.verify(sig, msg))
+}
+
+function opTest () {
+  console.log('opTest')
+  const sec1 = new bls.SecretKey()
+  const sec2 = new bls.SecretKey()
+  sec1.setByCSPRNG()
+  sec2.setByCSPRNG()
+  const pub1 = sec1.getPublicKey()
+  const pub2 = sec2.getPublicKey()
+  sec1.dump('sec1 ')
+  sec2.dump('sec2 ')
+  pub1.dump('pub1 ')
+  pub2.dump('pub2 ')
+
+  const msg = 'doremifa'
+  const sig1 = sec1.sign(msg)
+  const sig2 = sec2.sign(msg)
+  assert(pub1.verify(sig1, msg))
+  assert(pub2.verify(sig2, msg))
+  // add
+  {
+    const sec = sec1.clone()
+    sec.add(sec2)
+    sec.dump('sec ')
+    const pub = pub1.clone()
+    pub.add(pub2)
+    pub.dump('pub ')
+    const sig = sig1.clone()
+    sig.add(sig2)
+    sig.dump('sig ')
+    assert(pub.verify(sig, msg))
+  }
+  // mul
+  pub1.mul(sec2)
+  pub1.dump('pub1*sec2 ')
+  pub2.mul(sec1)
+  pub2.dump('pub2*sec1 ')
+  assert(pub1.isEqual(pub2))
 }
 
 function bench (label, count, func) {
