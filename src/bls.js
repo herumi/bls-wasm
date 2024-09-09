@@ -540,6 +540,9 @@ const _blsSetupFactory = (createModule) => {
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
       }
+      mul (rhs) {
+        this._update(mod._blsPublicKeyMul, rhs)
+      }
       share (mpk, id) {
         callShare(mod._blsPublicKeyShare, this, BLS_PUBLICKEY_SIZE, mpk, id)
       }
