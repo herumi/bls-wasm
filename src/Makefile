@@ -8,6 +8,7 @@ EMCC_OPT+=-Wall -Wextra
 EMCC_OPT+=-O3 -DNDEBUG
 EMCC_OPT+=-DMCL_SIZEOF_UNIT=4
 EMCC_OPT+=-std=c++03 -fno-threadsafe-statics -fno-rtti -fno-stack-protector
+EMCC_OPT+=-flto
 EMCC_OPT+=-fno-exceptions
 EMCC_OPT+=-DMCLBN_FORCE_EXPORT
 EMCC_OPT+=-DMCL_MAX_BIT_SIZE=384
