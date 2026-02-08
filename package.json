@@ -1,6 +1,6 @@
 {
   "name": "bls-wasm",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
   "scripts": {
@@ -30,5 +30,6 @@
   "bugs": {
     "url": "https://github.com/herumi/bls-wasm/issues"
   },
-  "homepage": "https://github.com/herumi/bls-wasm#readme"
+  "homepage": "https://github.com/herumi/bls-wasm#readme",
+  "packageManager": "pnpm@10.29.1"
 }

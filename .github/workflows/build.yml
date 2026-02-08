@@ -20,6 +20,9 @@ jobs:
         node-version: "20"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.1
     - run: |
         git pull
         cur=$(git rev-parse --abbrev-ref HEAD)
@@ -40,10 +43,10 @@ jobs:
         git submodule update --init --recursive
         make -C src
         cd browser
-        npm install -D webpack webpack-cli
-        npx webpack
+        pnpm install -D webpack webpack-cli
+        pnpm exec webpack
         cd ..
-        npm test
+        pnpm test
         sha256sum src/bls_c.js browser/bls.js
         git add -f src/bls_c.js browser/bls.js
         changes=$(git diff --staged --numstat | wc -l)
