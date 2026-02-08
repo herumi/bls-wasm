@@ -15,9 +15,17 @@ The version `v0.4.2` breaks backward compatibility of the entry point.
 - React : `const bls = require('bls-wasm/browser')`
 - HTML : `<script src="https://herumi.github.io/bls-wasm/browser/bls.js"></script>`
 
+## Installation
+
+This project uses pnpm for package management.
+
+```
+pnpm install
+```
+
 ## for Node.js
 ```
-node test/test.js
+pnpm test
 ```
 
 ## for browser
