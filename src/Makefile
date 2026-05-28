@@ -29,9 +29,10 @@ EMCC_OPT+=-s ABORTING_MALLOC=0
 EMCC_OPT+=-s DISABLE_EXCEPTION_CATCHING=1
 EMCC_OPT+=-s STACK_SIZE=1MB
 EMCC_OPT+=-sEXPORTED_RUNTIME_METHODS=HEAP8,HEAP32
+EMCC_OPT+=-sEXPORTED_FUNCTIONS=stackAlloc,stackSave,stackRestore
 
 bls_c.js:
-	emcc -o $@ $(BLS_DIR)/src/bls_c384_256.cpp $(MCL_DIR)/src/fp.cpp $(EMCC_OPT)
+	emcc -o $@ $(BLS_DIR)/src/bls_c384_256.cpp $(MCL_DIR)/src/fp.cpp dep.cpp $(EMCC_OPT)
 	# disable require fs, path
 	perl -i -pe 's@(.* = require\(.*)@//\1@' $@
 
