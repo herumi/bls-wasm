@@ -31,12 +31,6 @@ const _blsSetupFactory = (createModule) => {
     const BLS_PUBLICKEY_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 1 : 2)
     const BLS_SIGNATURE_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 2 : 1)
 
-    const _malloc = size => {
-      return mod._blsMalloc(size)
-    }
-    const _free = pos => {
-      mod._blsFree(pos)
-    }
     const ptrToAsciiStr = (pos, n) => {
       let s = ''
       for (let i = 0; i < n; i++) {
@@ -259,16 +253,6 @@ const _blsSetupFactory = (createModule) => {
         copy.a_ = this.a_.slice(0)
         return copy
       }
-      // alloc new array (heap)
-      _alloc () {
-        return _malloc(this.a_.length * 4)
-      }
-      // alloc and copy a_ to mod.HEAP32[pos / 4] (heap)
-      _allocAndCopy () {
-        const pos = this._alloc()
-        mod.HEAP32.set(this.a_, pos / 4)
-        return pos
-      }
       // stack alloc new array
       _salloc () {
         return mod.stackAlloc(this.a_.length * 4)
@@ -282,11 +266,6 @@ const _blsSetupFactory = (createModule) => {
       // save pos to a_
       _save (pos) {
         this.a_.set(mod.HEAP32.subarray(pos / 4, pos / 4 + this.a_.length))
-      }
-      // save and free (heap)
-      _saveAndFree(pos) {
-        this._save(pos)
-        _free(pos)
       }
       // set parameter (p1, p2 may be undefined)
       _setter (func, p1, p2) {
