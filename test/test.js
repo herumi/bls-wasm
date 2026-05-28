@@ -127,9 +127,9 @@ function benchBls () {
   const sec = new bls.SecretKey()
   sec.setByCSPRNG()
   const pub = sec.getPublicKey()
-  bench('time_sign_class', 50, () => sec.sign(msg))
+  bench('time_sign_class', 300, () => sec.sign(msg))
   const sig = sec.sign(msg)
-  bench('time_verify_class', 50, () => pub.verify(sig, msg))
+  bench('time_verify_class', 300, () => pub.verify(sig, msg))
 }
 
 function benchAll () {

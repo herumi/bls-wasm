@@ -2,14 +2,16 @@
 
 # BLS signature for Node.js by WebAssembly
 
-# Abstract
+## Abstract
 
 - Fr : SecretKey, G2 : PublicKey, G1 : Signature
 - see [bls-eth-wasm](https://github.com/herumi/bls-eth-wasm) if you need Ethereum 2.0 compatible sign/verify.
 - see [bls](https://github.com/herumi/bls) and [BLS demo on browser](https://herumi.github.io/bls-wasm/browser/demo.html)
 
+## News
+- v1.5.0: build with clang instead of emcc
+
 ## How to use
-The version `v0.4.2` breaks backward compatibility of the entry point.
 
 - Node.js : `const bls = require('bls-wasm')`
 - React : `const bls = require('bls-wasm/browser')`

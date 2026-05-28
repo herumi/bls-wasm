@@ -6,14 +6,12 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: '20'
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 10.29.1
+        node-version: "24"
+    - uses: pnpm/action-setup@v6
     - run: node test/test.js
     - run: node test/mcl-test.js
 

@@ -31,12 +31,6 @@ const _blsSetupFactory = (createModule) => {
     const BLS_PUBLICKEY_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 1 : 2)
     const BLS_SIGNATURE_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 2 : 1)
 
-    const _malloc = size => {
-      return mod._blsMalloc(size)
-    }
-    const _free = pos => {
-      mod._blsFree(pos)
-    }
     const ptrToAsciiStr = (pos, n) => {
       let s = ''
       for (let i = 0; i < n; i++) {
@@ -87,9 +81,11 @@ const _blsSetupFactory = (createModule) => {
     const _wrapGetStr = (func, returnAsStr = true) => {
       return (x, ioMode = 0) => {
         const maxBufSize = 3096
-        const pos = _malloc(maxBufSize)
+        const stack = mod.stackSave()
+        const pos = mod.stackAlloc(maxBufSize)
         const n = func(pos, maxBufSize, x, ioMode)
         if (n <= 0) {
+          mod.stackRestore(stack)
           throw new Error('err gen_str:' + x)
         }
         let s = null
@@ -98,7 +94,7 @@ const _blsSetupFactory = (createModule) => {
         } else {
           s = new Uint8Array(mod.HEAP8.subarray(pos, pos + n))
         }
-        _free(pos)
+        mod.stackRestore(stack)
         return s
       }
     }
@@ -107,10 +103,11 @@ const _blsSetupFactory = (createModule) => {
     }
     const _wrapDeserialize = func => {
       return (x, buf) => {
-        const pos = _malloc(buf.length)
+        const stack = mod.stackSave()
+        const pos = mod.stackAlloc(buf.length)
         mod.HEAP8.set(buf, pos)
         const r = func(x, pos, buf.length)
-        _free(pos)
+        mod.stackRestore(stack)
         if (r === 0 || r !== buf.length) throw new Error('err _wrapDeserialize', buf)
       }
     }
@@ -128,57 +125,60 @@ const _blsSetupFactory = (createModule) => {
           throw new Error(`err bad type:"${typeStr}". Use String or Uint8Array.`)
         }
         const ioMode = args[argNum + 1] // may undefined
-        const pos = _malloc(buf.length)
+        const stack = mod.stackSave()
+        const pos = mod.stackAlloc(buf.length)
         if (typeStr === '[object String]') {
           asciiStrToPtr(pos, buf)
         } else {
           mod.HEAP8.set(buf, pos)
         }
         const r = func(...args.slice(0, argNum), pos, buf.length, ioMode)
-        _free(pos)
+        mod.stackRestore(stack)
         if (returnValue) return r
         if (r) throw new Error('err _wrapInput ' + buf)
       }
     }
     const callSetter = (func, a, p1, p2) => {
-      const pos = _malloc(a.length * 4)
+      const stack = mod.stackSave()
+      const pos = mod.stackAlloc(a.length * 4)
       func(pos, p1, p2) // p1, p2 may be undefined
       copyToUint32Array(a, pos)
-      _free(pos)
+      mod.stackRestore(stack)
     }
     const callGetter = (func, a, p1, p2) => {
-      const pos = _malloc(a.length * 4)
+      const stack = mod.stackSave()
+      const pos = mod.stackAlloc(a.length * 4)
       mod.HEAP32.set(a, pos / 4)
       const s = func(pos, p1, p2)
-      _free(pos)
+      mod.stackRestore(stack)
       return s
     }
     const callShare = (func, a, size, vec, id) => {
-      const pos = a._allocAndCopy()
-      const idPos = id._allocAndCopy()
-      const vecPos = _malloc(size * vec.length)
+      const stack = mod.stackSave()
+      const pos = a._sallocAndCopy()
+      const idPos = id._sallocAndCopy()
+      const vecPos = mod.stackAlloc(size * vec.length)
       for (let i = 0; i < vec.length; i++) {
         copyFromUint32Array(vecPos + size * i, vec[i].a_)
       }
       func(pos, vecPos, vec.length, idPos)
-      _free(vecPos)
-      _free(idPos)
-      a._saveAndFree(pos)
+      a._save(pos)
+      mod.stackRestore(stack)
     }
     const callRecover = (func, a, size, vec, idVec) => {
       const n = vec.length
       if (n != idVec.length) throw ('recover:bad length')
-      const secPos = a._alloc()
-      const vecPos = _malloc(size * n)
-      const idVecPos = _malloc(BLS_ID_SIZE * n)
+      const stack = mod.stackSave()
+      const secPos = a._salloc()
+      const vecPos = mod.stackAlloc(size * n)
+      const idVecPos = mod.stackAlloc(BLS_ID_SIZE * n)
       for (let i = 0; i < n; i++) {
         copyFromUint32Array(vecPos + size * i, vec[i].a_)
         copyFromUint32Array(idVecPos + BLS_ID_SIZE * i, idVec[i].a_)
       }
       const r = func(secPos, vecPos, idVecPos, n)
-      _free(idVecPos)
-      _free(vecPos)
-      a._saveAndFree(secPos)
+      a._save(secPos)
+      mod.stackRestore(stack)
       if (r) throw ('callRecover')
     }
 
@@ -253,13 +253,13 @@ const _blsSetupFactory = (createModule) => {
         copy.a_ = this.a_.slice(0)
         return copy
       }
-      // alloc new array
-      _alloc () {
-        return _malloc(this.a_.length * 4)
+      // stack alloc new array
+      _salloc () {
+        return mod.stackAlloc(this.a_.length * 4)
       }
-      // alloc and copy a_ to mod.HEAP32[pos / 4]
-      _allocAndCopy () {
-        const pos = this._alloc()
+      // stack alloc and copy a_ to mod.HEAP32[pos / 4]
+      _sallocAndCopy () {
+        const pos = this._salloc()
         mod.HEAP32.set(this.a_, pos / 4)
         return pos
       }
@@ -267,62 +267,62 @@ const _blsSetupFactory = (createModule) => {
       _save (pos) {
         this.a_.set(mod.HEAP32.subarray(pos / 4, pos / 4 + this.a_.length))
       }
-      // save and free
-      _saveAndFree(pos) {
-        this._save(pos)
-        _free(pos)
-      }
       // set parameter (p1, p2 may be undefined)
       _setter (func, p1, p2) {
-        const pos = this._alloc()
+        const stack = mod.stackSave()
+        const pos = this._salloc()
         const r = func(pos, p1, p2)
-        this._saveAndFree(pos)
+        this._save(pos)
+        mod.stackRestore(stack)
         if (r) throw new Error('_setter err')
       }
       // getter (p1, p2 may be undefined)
       _getter (func, p1, p2) {
-        const pos = this._allocAndCopy()
+        const stack = mod.stackSave()
+        const pos = this._sallocAndCopy()
         const s = func(pos, p1, p2)
-        _free(pos)
+        mod.stackRestore(stack)
         return s
       }
       _isEqual (func, rhs) {
-        const xPos = this._allocAndCopy()
-        const yPos = rhs._allocAndCopy()
+        const stack = mod.stackSave()
+        const xPos = this._sallocAndCopy()
+        const yPos = rhs._sallocAndCopy()
         const r = func(xPos, yPos)
-        _free(yPos)
-        _free(xPos)
+        mod.stackRestore(stack)
         return r === 1
       }
       // func(y, this) and return y
       _op1 (func) {
         const y = new this.constructor()
-        const xPos = this._allocAndCopy()
-        const yPos = y._alloc()
+        const stack = mod.stackSave()
+        const xPos = this._sallocAndCopy()
+        const yPos = y._salloc()
         func(yPos, xPos)
-        y._saveAndFree(yPos)
-        _free(xPos)
+        y._save(yPos)
+        mod.stackRestore(stack)
         return y
       }
       // func(z, this, y) and return z
       _op2 (func, y, Cstr = null) {
         const z = Cstr ? new Cstr() : new this.constructor()
-        const xPos = this._allocAndCopy()
-        const yPos = y._allocAndCopy()
-        const zPos = z._alloc()
+        const stack = mod.stackSave()
+        const xPos = this._sallocAndCopy()
+        const yPos = y._sallocAndCopy()
+        const zPos = z._salloc()
         func(zPos, xPos, yPos)
-        z._saveAndFree(zPos)
-        _free(yPos)
-        _free(xPos)
+        z._save(zPos)
+        mod.stackRestore(stack)
         return z
       }
       // func(self, y)
       _update (func, y) {
-        const xPos = this._allocAndCopy()
-        const yPos = y._allocAndCopy()
+        const stack = mod.stackSave()
+        const xPos = this._sallocAndCopy()
+        const yPos = y._sallocAndCopy()
         func(xPos, yPos)
-        _free(yPos)
-        this._saveAndFree(xPos)
+        this._save(xPos)
+        mod.stackRestore(stack)
       }
     }
 
@@ -478,11 +478,12 @@ const _blsSetupFactory = (createModule) => {
       }
       getPublicKey () {
         const pub = new exports.PublicKey()
-        const secPos = this._allocAndCopy()
-        const pubPos = pub._alloc()
+        const stack = mod.stackSave()
+        const secPos = this._sallocAndCopy()
+        const pubPos = pub._salloc()
         mod._blsGetPublicKey(pubPos, secPos)
-        pub._saveAndFree(pubPos)
-        _free(secPos)
+        pub._save(pubPos)
+        mod.stackRestore(stack)
         return pub
       }
       /*
@@ -493,11 +494,12 @@ const _blsSetupFactory = (createModule) => {
       */
       sign (m) {
         const sig = new exports.Signature()
-        const secPos = this._allocAndCopy()
-        const sigPos = sig._alloc()
+        const stack = mod.stackSave()
+        const secPos = this._sallocAndCopy()
+        const sigPos = sig._salloc()
         exports.blsSign(sigPos, secPos, m)
-        sig._saveAndFree(sigPos)
-        _free(secPos)
+        sig._save(sigPos)
+        mod.stackRestore(stack)
         return sig
       }
     }
@@ -553,11 +555,11 @@ const _blsSetupFactory = (createModule) => {
         return this._getter(mod._blsPublicKeyIsValidOrder)
       }
       verify (sig, m) {
-        const pubPos = this._allocAndCopy()
-        const sigPos = sig._allocAndCopy()
+        const stack = mod.stackSave()
+        const pubPos = this._sallocAndCopy()
+        const sigPos = sig._sallocAndCopy()
         const r = exports.blsVerify(sigPos, pubPos, m)
-        _free(sigPos)
-        _free(pubPos)
+        mod.stackRestore(stack)
         return r != 0
       }
     }
@@ -567,16 +569,19 @@ const _blsSetupFactory = (createModule) => {
       return r
     }
     exports.setGeneratorOfPublicKey = pub => {
-      const pubPos = pub._allocAndCopy()
+      const stack = mod.stackSave()
+      const pubPos = pub._sallocAndCopy()
       const r = mod._blsSetGeneratorOfPublicKey(pubPos)
-      _free(pubPos)
+      mod.stackRestore(stack)
       if (r !== 0) throw new Error('bad public key')
     }
     exports.getGeneratorOfPublicKey = () => {
       const pub = new exports.PublicKey()
-      const pubPos = _malloc(BLS_SIGNATURE_SIZE)
+      const stack = mod.stackSave()
+      const pubPos = pub._salloc()
       mod._blsGetGeneratorOfPublicKey(pubPos)
-      pub._saveAndFree(pubPos)
+      pub._save(pubPos)
+      mod.stackRestore(stack)
       return pub
     }
     exports.getGeneratorofPublicKey = () => {
@@ -626,31 +631,31 @@ const _blsSetupFactory = (createModule) => {
       // this = aggSig
       aggregate (sigVec) {
         const n = sigVec.length
-        const aggSigPos = this._allocAndCopy()
-        const sigVecPos = _malloc(BLS_SIGNATURE_SIZE * n)
+        const stack = mod.stackSave()
+        const aggSigPos = this._sallocAndCopy()
+        const sigVecPos = mod.stackAlloc(BLS_SIGNATURE_SIZE * n)
         for (let i = 0; i < n; i++) {
           mod.HEAP32.set(sigVec[i].a_, (sigVecPos + BLS_SIGNATURE_SIZE * i) / 4)
         }
         const r = mod._blsAggregateSignature(aggSigPos, sigVecPos, n)
-        _free(sigVecPos)
-        this._saveAndFree(aggSigPos)
+        this._save(aggSigPos)
+        mod.stackRestore(stack)
         return r == 1
       }
       // this = aggSig
       fastAggregateVerify (pubVec, msg) {
         const n = pubVec.length
         const msgSize = msg.length
-        const aggSigPos = this._allocAndCopy()
-        const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
-        const msgPos = _malloc(msgSize)
+        const stack = mod.stackSave()
+        const aggSigPos = this._sallocAndCopy()
+        const pubVecPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
+        const msgPos = mod.stackAlloc(msgSize)
         for (let i = 0; i < n; i++) {
           mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
         }
         mod.HEAP8.set(msg, msgPos)
         const r = mod._blsFastAggregateVerify(aggSigPos, pubVecPos, n, msgPos, msgSize)
-        _free(msgPos)
-        _free(pubVecPos)
-        _free(aggSigPos)
+        mod.stackRestore(stack)
         return r == 1
       }
       // this = aggSig
@@ -661,17 +666,16 @@ const _blsSetupFactory = (createModule) => {
         if (n == 0 || msgVec.length != msgSize * n) {
           return false
         }
-        const aggSigPos = this._allocAndCopy()
-        const pubVecPos = _malloc(BLS_PUBLICKEY_SIZE * n)
-        const msgPos = _malloc(msgVec.length)
+        const stack = mod.stackSave()
+        const aggSigPos = this._sallocAndCopy()
+        const pubVecPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
+        const msgPos = mod.stackAlloc(msgVec.length)
         for (let i = 0; i < n; i++) {
           mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
         }
         mod.HEAP8.set(msgVec, msgPos)
         const r = mod._blsAggregateVerifyNoCheck(aggSigPos, pubVecPos, msgPos, msgSize, n)
-        _free(msgPos)
-        _free(pubVecPos)
-        _free(aggSigPos)
+        mod.stackRestore(stack)
         return r == 1
       }
     }
@@ -722,10 +726,11 @@ const _blsSetupFactory = (createModule) => {
       for (let i = 0; i < n; i++) {
         if (msgs[i].length != MSG_SIZE) return false
       }
-      const sigPos = _malloc(BLS_SIGNATURE_SIZE * n)
-      const pubPos = _malloc(BLS_PUBLICKEY_SIZE * n)
-      const msgPos = _malloc(MSG_SIZE * n)
-      const randPos = _malloc(RAND_SIZE * n)
+      const stack = mod.stackSave()
+      const sigPos = mod.stackAlloc(BLS_SIGNATURE_SIZE * n)
+      const pubPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
+      const msgPos = mod.stackAlloc(MSG_SIZE * n)
+      const randPos = mod.stackAlloc(RAND_SIZE * n)
 
       // getRandomValues accepts only Uint8Array
       const rai = mod.HEAP8.subarray(randPos, randPos + RAND_SIZE * n)
@@ -738,10 +743,7 @@ const _blsSetupFactory = (createModule) => {
       }
       const r = mod._blsMultiVerify(sigPos, pubPos, msgPos, MSG_SIZE, randPos, RAND_SIZE, n, threadNum)
 
-      _free(randPos)
-      _free(msgPos)
-      _free(pubPos)
-      _free(sigPos)
+      mod.stackRestore(stack)
       return r == 1
     }
     exports.blsInit(curveType)

@@ -1,10 +1,13 @@
 {
   "name": "bls-wasm",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "BLS signature for Node.js by WebAssembly",
   "main": "src/index.js",
   "packageManager": "pnpm@10.29.1",
   "scripts": {
+    "build": "pnpm run build:bls_c.js && pnpm run build:browser",
+    "build:bls_c.js": "make -C src",
+    "build:browser": "cd browser && pnpm exec webpack",
     "test": "node test/test.js"
   },
   "types": "src/index.d.ts",
@@ -30,6 +33,10 @@
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/herumi/bls-wasm/issues"
+  },
+  "devDependencies": {
+    "webpack": "^5.107.1",
+    "webpack-cli": "^6.0.1"
   },
   "homepage": "https://github.com/herumi/bls-wasm#readme"
 }

@@ -13,16 +13,17 @@ jobs:
     name: bls-wasm
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: node
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: "20"
+        node-version: "24"
+    - name: Install pnpm
+      uses: pnpm/action-setup@v6
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - uses: pnpm/action-setup@v4
-      with:
-        version: 10.29.1
+    - name: Install build dependencies
+      run: sudo apt install -y clang-18 lld-18 binaryen
     - run: |
         git pull
         cur=$(git rev-parse --abbrev-ref HEAD)
@@ -33,15 +34,8 @@ jobs:
         fi
         git config user.name github-actions
         git config user.email github-actions@github.com
-        git clone https://github.com/emscripten-core/emsdk.git
-        cd emsdk/
-        ./emsdk install latest
-        ./emsdk activate latest
-        source ./emsdk_env.sh
-        emcc -v
-        cd ..
         git submodule update --init --recursive
-        make -C src
+        make -C src LLVM_VER=-18
         cd browser
         pnpm install -D webpack webpack-cli
         pnpm exec webpack
