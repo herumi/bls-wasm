@@ -8,7 +8,8 @@
     "build": "pnpm run build:bls_c.js && pnpm run build:browser",
     "build:bls_c.js": "make -C src",
     "build:browser": "cd browser && pnpm exec webpack",
-    "test": "node test/test.js"
+    "test": "node test/test.js",
+    "update-all": "pnpm update && pnpm --dir browser update"
   },
   "types": "src/index.d.ts",
   "repository": {
