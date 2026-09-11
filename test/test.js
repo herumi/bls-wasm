@@ -10,6 +10,7 @@ const curveTest = (curveType, name) => {
         console.log(`name=${name} curve order=${bls.getCurveOrder()}`)
         serializeTest()
         signatureTest()
+        largeStackTest()
         opTest()
         miscTest()
         shareTest()
@@ -33,6 +34,23 @@ async function curveTestAll () {
 }
 
 curveTestAll()
+
+function largeStackTest () {
+  let thrown = false
+  try {
+    // throw if data size is large
+    new bls.PublicKey().deserialize(new Uint8Array(2 * 1024 * 1024))
+  } catch (e) {
+    thrown = true
+  }
+  assert(thrown)
+  // the module must still be usable afterwards
+  const sec = new bls.SecretKey()
+  sec.setByCSPRNG()
+  const pub = sec.getPublicKey()
+  const sig = sec.sign('abc')
+  assert(pub.verify(sig, 'abc'))
+}
 
 function serializeSubTest (t, Cstr) {
   const s = t.serializeToHexStr()
