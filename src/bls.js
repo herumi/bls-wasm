@@ -805,12 +805,9 @@ const _blsSetupFactory = (createModule) => {
     }
   } // blsSetup()
 
-  const _cryptoGetRandomValues = function(p, n) {
-    const a = new Uint8Array(n)
+  // glue.js calls this with a Uint8Array to be filled
+  const _cryptoGetRandomValues = function(a) {
     exports.getRandomValues(a)
-    for (let i = 0; i < n; i++) {
-      exports.mod.HEAP8[p + i] = a[i]
-    }
   }
   // f(a:array) fills a with random value
   exports.setRandFunc = f => {
