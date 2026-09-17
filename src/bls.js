@@ -31,18 +31,6 @@ const _blsSetupFactory = (createModule) => {
     const BLS_PUBLICKEY_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 1 : 2)
     const BLS_SIGNATURE_SIZE = MCLBN_FP_SIZE * 3 * (exports.ethMode ? 2 : 1)
 
-    const ptrToAsciiStr = (pos, n) => {
-      let s = ''
-      for (let i = 0; i < n; i++) {
-        s += String.fromCharCode(mod.HEAP8[pos + i])
-      }
-      return s
-    }
-    const asciiStrToPtr = (pos, s) => {
-      for (let i = 0; i < s.length; i++) {
-        mod.HEAP8[pos + i] = s.charCodeAt(i)
-      }
-    }
     exports.toHex = (a, start, n) => {
       let s = ''
       for (let i = 0; i < n; i++) {
@@ -65,172 +53,81 @@ const _blsSetupFactory = (createModule) => {
       return a
     }
 ///////////////////////////
-    const copyToUint32Array = (a, pos) => {
-      a.set(mod.HEAP32.subarray(pos / 4, pos / 4 + a.length))
-//    for (let i = 0; i < a.length; i++) {
-//      a[i] = mod.HEAP32[pos / 4 + i]
-//    }
-    }
-    const copyFromUint32Array = (pos, a) => {
-      mod.HEAP32.set(a, pos / 4)
-//    for (let i = 0; i < a.length; i++) {
-//      mod.HEAP32[pos / 4 + i] = a[i]
-//    }
-    }
-//////////////////////////////////
-    const _wrapGetStr = (func, returnAsStr = true) => {
-      return (x, ioMode = 0) => {
-        const maxBufSize = 3096
-        const stack = mod.stackSave()
-        const pos = mod.stackAlloc(maxBufSize)
-        const n = func(pos, maxBufSize, x, ioMode)
-        if (n <= 0) {
-          mod.stackRestore(stack)
-          throw new Error('err gen_str:' + x)
-        }
-        let s = null
-        if (returnAsStr) {
-          s = ptrToAsciiStr(pos, n)
-        } else {
-          s = new Uint8Array(mod.HEAP8.subarray(pos, pos + n))
-        }
-        mod.stackRestore(stack)
-        return s
-      }
-    }
-    const _wrapSerialize = func => {
-      return _wrapGetStr(func, false)
-    }
-    const _wrapDeserialize = func => {
-      return (x, buf) => {
-        const stack = mod.stackSave()
-        const pos = mod.stackAlloc(buf.length)
-        mod.HEAP8.set(buf, pos)
-        const r = func(x, pos, buf.length)
-        mod.stackRestore(stack)
-        if (r === 0 || r !== buf.length) throw new Error('err _wrapDeserialize', buf)
-      }
-    }
-    /*
-      argNum : n
-      func(x0, ..., x_(n-1), buf, ioMode)
-      => func(x0, ..., x_(n-1), pos, buf.length, ioMode)
-    */
-    const _wrapInput = (func, argNum, returnValue = false) => {
-      return function () {
-        const args = [...arguments]
-        const buf = args[argNum]
-        const typeStr = Object.prototype.toString.apply(buf)
-        if (['[object String]', '[object Uint8Array]', '[object Array]'].indexOf(typeStr) < 0) {
-          throw new Error(`err bad type:"${typeStr}". Use String or Uint8Array.`)
-        }
-        const ioMode = args[argNum + 1] // may undefined
-        const stack = mod.stackSave()
-        const pos = mod.stackAlloc(buf.length)
-        if (typeStr === '[object String]') {
-          asciiStrToPtr(pos, buf)
-        } else {
-          mod.HEAP8.set(buf, pos)
-        }
-        const r = func(...args.slice(0, argNum), pos, buf.length, ioMode)
-        mod.stackRestore(stack)
-        if (returnValue) return r
-        if (r) throw new Error('err _wrapInput ' + buf)
-      }
-    }
-    const callSetter = (func, a, p1, p2) => {
-      const stack = mod.stackSave()
-      const pos = mod.stackAlloc(a.length * 4)
-      func(pos, p1, p2) // p1, p2 may be undefined
-      copyToUint32Array(a, pos)
-      mod.stackRestore(stack)
-    }
-    const callGetter = (func, a, p1, p2) => {
-      const stack = mod.stackSave()
-      const pos = mod.stackAlloc(a.length * 4)
-      mod.HEAP32.set(a, pos / 4)
-      const s = func(pos, p1, p2)
-      mod.stackRestore(stack)
-      return s
-    }
-    const callShare = (func, a, size, vec, id) => {
-      const stack = mod.stackSave()
-      const pos = a._sallocAndCopy()
-      const idPos = id._sallocAndCopy()
-      const vecPos = mod.stackAlloc(size * vec.length)
-      for (let i = 0; i < vec.length; i++) {
-        copyFromUint32Array(vecPos + size * i, vec[i].a_)
-      }
-      func(pos, vecPos, vec.length, idPos)
-      a._save(pos)
-      mod.stackRestore(stack)
-    }
-    const callRecover = (func, a, size, vec, idVec) => {
-      const n = vec.length
-      if (n != idVec.length) throw ('recover:bad length')
-      const stack = mod.stackSave()
-      const secPos = a._salloc()
-      const vecPos = mod.stackAlloc(size * n)
-      const idVecPos = mod.stackAlloc(BLS_ID_SIZE * n)
-      for (let i = 0; i < n; i++) {
-        copyFromUint32Array(vecPos + size * i, vec[i].a_)
-        copyFromUint32Array(idVecPos + BLS_ID_SIZE * i, idVec[i].a_)
-      }
-      const r = func(secPos, vecPos, idVecPos, n)
-      a._save(secPos)
-      mod.stackRestore(stack)
-      if (r) throw ('callRecover')
-    }
+    // shared wrappers defined in mcl/src/wasm/glue.js (embedded in bls_c.js);
+    // values are passed as Uint32Array (a_) and the stack is restored in finally
+    const stackSave = mod.stackSave
+    const stackAlloc = mod.stackAlloc
+    const stackRestore = mod.stackRestore
+    const sallocCopy = mod.sallocCopy
+    const sallocBytes = mod.sallocBytes
+    const sallocArray = mod.sallocArray
+    const copyFromHeap32 = mod.copyFromHeap32
+    const callSetter = mod.callSetter
+    const callGetter = mod.callGetter
+    const callGetter2 = mod.callGetter2
+    const callOp1 = mod.callOp1
+    const callOp2 = mod.callOp2
+    const callUpdate = mod.callUpdate
+    const callOp1Input = mod.callOp1Input
+    const callGetter2Input = mod.callGetter2Input
+    const callShare = mod.callShare
+    const callRecover = mod.callRecover
+    const callSetInput = mod.callSetInput
+    const callGetStr = mod.callGetStr
+    const callDeserialize = mod.callDeserialize
+    const callSerialize = mod.callSerialize
+    // array of the internal buffers of v (for sallocArray / callShare / callRecover)
+    const _toArrays = v => v.map(x => x.a_)
 
     // change curveType
     exports.blsInit = (curveType = exports.ethMode ? exports.BLS12_381 : exports.BN254) => {
       const r = mod._blsInit(curveType, MCLBN_COMPILED_TIME_VAR)
       if (r) throw ('blsInit err ' + r)
     }
-    exports.mclBnFr_setLittleEndian = _wrapInput(mod._mclBnFr_setLittleEndian, 1)
-    exports.mclBnFr_setLittleEndianMod = _wrapInput(mod._mclBnFr_setLittleEndianMod, 1)
-    exports.mclBnFr_setBigEndianMod = _wrapInput(mod._mclBnFr_setBigEndianMod, 1)
-    exports.mclBnFr_setStr = _wrapInput(mod._mclBnFr_setStr, 1)
-    exports.mclBnFr_getStr = _wrapGetStr(mod._mclBnFr_getStr)
-    exports.mclBnFr_deserialize = _wrapDeserialize(mod._mclBnFr_deserialize)
-    exports.mclBnFr_serialize = _wrapSerialize(mod._mclBnFr_serialize)
-    exports.mclBnFr_setHashOf = _wrapInput(mod._mclBnFr_setHashOf, 1)
+    exports.mclBnFr_setLittleEndian = mod.wrapInput(mod._mclBnFr_setLittleEndian, 1)
+    exports.mclBnFr_setLittleEndianMod = mod.wrapInput(mod._mclBnFr_setLittleEndianMod, 1)
+    exports.mclBnFr_setBigEndianMod = mod.wrapInput(mod._mclBnFr_setBigEndianMod, 1)
+    exports.mclBnFr_setStr = mod.wrapInput(mod._mclBnFr_setStr, 1)
+    exports.mclBnFr_getStr = mod.wrapGetStr(mod._mclBnFr_getStr)
+    exports.mclBnFr_deserialize = mod.wrapDeserialize(mod._mclBnFr_deserialize)
+    exports.mclBnFr_serialize = mod.wrapSerialize(mod._mclBnFr_serialize)
+    exports.mclBnFr_setHashOf = mod.wrapInput(mod._mclBnFr_setHashOf, 1)
 
-    exports.mclBnG1_setStr = _wrapInput(mod._mclBnG1_setStr, 1)
-    exports.mclBnG1_getStr = _wrapGetStr(mod._mclBnG1_getStr)
-    exports.mclBnG2_setStr = _wrapInput(mod._mclBnG2_setStr, 1)
-    exports.mclBnG2_getStr = _wrapGetStr(mod._mclBnG2_getStr)
+    exports.mclBnG1_setStr = mod.wrapInput(mod._mclBnG1_setStr, 1)
+    exports.mclBnG1_getStr = mod.wrapGetStr(mod._mclBnG1_getStr)
+    exports.mclBnG2_setStr = mod.wrapInput(mod._mclBnG2_setStr, 1)
+    exports.mclBnG2_getStr = mod.wrapGetStr(mod._mclBnG2_getStr)
 
-    exports.getCurveOrder = _wrapGetStr(mod._blsGetCurveOrder)
-    exports.getFieldOrder = _wrapGetStr(mod._blsGetFieldOrder)
-    exports.setDstG1 = _wrapInput(mod._mclBnG1_setDst, 0)
-    exports.setDstG2 = _wrapInput(mod._mclBnG2_setDst, 0)
+    exports.getCurveOrder = mod.wrapGetStr(mod._blsGetCurveOrder)
+    exports.getFieldOrder = mod.wrapGetStr(mod._blsGetFieldOrder)
+    exports.setDstG1 = mod.wrapInput(mod._mclBnG1_setDst, 0)
+    exports.setDstG2 = mod.wrapInput(mod._mclBnG2_setDst, 0)
 
-    exports.blsIdSetDecStr = _wrapInput(mod._blsIdSetDecStr, 1)
-    exports.blsIdSetHexStr = _wrapInput(mod._blsIdSetHexStr, 1)
-    exports.blsIdGetDecStr = _wrapGetStr(mod._blsIdGetDecStr)
-    exports.blsIdGetHexStr = _wrapGetStr(mod._blsIdGetHexStr)
+    exports.blsIdSetDecStr = mod.wrapInput(mod._blsIdSetDecStr, 1)
+    exports.blsIdSetHexStr = mod.wrapInput(mod._blsIdSetHexStr, 1)
+    exports.blsIdGetDecStr = mod.wrapGetStr(mod._blsIdGetDecStr)
+    exports.blsIdGetHexStr = mod.wrapGetStr(mod._blsIdGetHexStr)
 
-    exports.blsIdSerialize = _wrapSerialize(mod._blsIdSerialize)
-    exports.blsSecretKeySerialize = _wrapSerialize(mod._blsSecretKeySerialize)
-    exports.blsPublicKeySerialize = _wrapSerialize(mod._blsPublicKeySerialize)
-    exports.blsSignatureSerialize = _wrapSerialize(mod._blsSignatureSerialize)
+    exports.blsIdSerialize = mod.wrapSerialize(mod._blsIdSerialize)
+    exports.blsSecretKeySerialize = mod.wrapSerialize(mod._blsSecretKeySerialize)
+    exports.blsPublicKeySerialize = mod.wrapSerialize(mod._blsPublicKeySerialize)
+    exports.blsSignatureSerialize = mod.wrapSerialize(mod._blsSignatureSerialize)
 
-    exports.blsIdDeserialize = _wrapDeserialize(mod._blsIdDeserialize)
-    exports.blsSecretKeyDeserialize = _wrapDeserialize(mod._blsSecretKeyDeserialize)
-    exports.blsPublicKeyDeserialize = _wrapDeserialize(mod._blsPublicKeyDeserialize)
-    exports.blsSignatureDeserialize = _wrapDeserialize(mod._blsSignatureDeserialize)
+    exports.blsIdDeserialize = mod.wrapDeserialize(mod._blsIdDeserialize)
+    exports.blsSecretKeyDeserialize = mod.wrapDeserialize(mod._blsSecretKeyDeserialize)
+    exports.blsPublicKeyDeserialize = mod.wrapDeserialize(mod._blsPublicKeyDeserialize)
+    exports.blsSignatureDeserialize = mod.wrapDeserialize(mod._blsSignatureDeserialize)
 
-    exports.blsPublicKeySerializeUncompressed = _wrapSerialize(mod._blsPublicKeySerializeUncompressed)
-    exports.blsSignatureSerializeUncompressed = _wrapSerialize(mod._blsSignatureSerializeUncompressed)
-    exports.blsPublicKeyDeserializeUncompressed = _wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
-    exports.blsSignatureDeserializeUncompressed = _wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
+    exports.blsPublicKeySerializeUncompressed = mod.wrapSerialize(mod._blsPublicKeySerializeUncompressed)
+    exports.blsSignatureSerializeUncompressed = mod.wrapSerialize(mod._blsSignatureSerializeUncompressed)
+    exports.blsPublicKeyDeserializeUncompressed = mod.wrapDeserialize(mod._blsPublicKeyDeserializeUncompressed)
+    exports.blsSignatureDeserializeUncompressed = mod.wrapDeserialize(mod._blsSignatureDeserializeUncompressed)
 
-    exports.blsSecretKeySetLittleEndian = _wrapInput(mod._blsSecretKeySetLittleEndian, 1)
-    exports.blsSecretKeySetLittleEndianMod = _wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
-    exports.blsHashToSecretKey = _wrapInput(mod._blsHashToSecretKey, 1)
-    exports.blsSign = _wrapInput(mod._blsSign, 2)
-    exports.blsVerify = _wrapInput(mod._blsVerify, 2, true)
+    exports.blsSecretKeySetLittleEndian = mod.wrapInput(mod._blsSecretKeySetLittleEndian, 1)
+    exports.blsSecretKeySetLittleEndianMod = mod.wrapInput(mod._blsSecretKeySetLittleEndianMod, 1)
+    exports.blsHashToSecretKey = mod.wrapInput(mod._blsHashToSecretKey, 1)
+    exports.blsSign = mod.wrapInput(mod._blsSign, 2)
+    exports.blsVerify = mod.wrapInput(mod._blsVerify, 2, true)
 
     class Common {
       constructor (size) {
@@ -255,74 +152,62 @@ const _blsSetupFactory = (createModule) => {
       }
       // stack alloc new array
       _salloc () {
-        return mod.stackAlloc(this.a_.length * 4)
+        return mod.salloc(this.a_)
       }
-      // stack alloc and copy a_ to mod.HEAP32[pos / 4]
+      // stack alloc and copy a_
       _sallocAndCopy () {
-        const pos = this._salloc()
-        mod.HEAP32.set(this.a_, pos / 4)
-        return pos
+        return sallocCopy(this.a_)
       }
       // save pos to a_
       _save (pos) {
-        this.a_.set(mod.HEAP32.subarray(pos / 4, pos / 4 + this.a_.length))
+        copyFromHeap32(this.a_, pos)
       }
-      // set parameter (p1, p2 may be undefined)
+      // this = func(p1, p2) ; throw if func returns non-zero (p1, p2 may be undefined)
       _setter (func, p1, p2) {
-        const stack = mod.stackSave()
-        const pos = this._salloc()
-        const r = func(pos, p1, p2)
-        this._save(pos)
-        mod.stackRestore(stack)
-        if (r) throw new Error('_setter err')
+        callSetter(func, this.a_, p1, p2)
       }
-      // getter (p1, p2 may be undefined)
+      // return func(this, p1, p2)
       _getter (func, p1, p2) {
-        const stack = mod.stackSave()
-        const pos = this._sallocAndCopy()
-        const s = func(pos, p1, p2)
-        mod.stackRestore(stack)
-        return s
+        return callGetter(func, this.a_, p1, p2)
       }
       _isEqual (func, rhs) {
-        const stack = mod.stackSave()
-        const xPos = this._sallocAndCopy()
-        const yPos = rhs._sallocAndCopy()
-        const r = func(xPos, yPos)
-        mod.stackRestore(stack)
-        return r === 1
+        return callGetter2(func, this.a_, rhs.a_) === 1
       }
-      // func(y, this) and return y
+      // y = func(this) and return y
       _op1 (func) {
         const y = new this.constructor()
-        const stack = mod.stackSave()
-        const xPos = this._sallocAndCopy()
-        const yPos = y._salloc()
-        func(yPos, xPos)
-        y._save(yPos)
-        mod.stackRestore(stack)
+        callOp1(func, y.a_, this.a_)
         return y
       }
-      // func(z, this, y) and return z
+      // z = func(this, y) and return z
       _op2 (func, y, Cstr = null) {
         const z = Cstr ? new Cstr() : new this.constructor()
-        const stack = mod.stackSave()
-        const xPos = this._sallocAndCopy()
-        const yPos = y._sallocAndCopy()
-        const zPos = z._salloc()
-        func(zPos, xPos, yPos)
-        z._save(zPos)
-        mod.stackRestore(stack)
+        callOp2(func, z.a_, this.a_, y.a_)
         return z
       }
-      // func(self, y)
+      // this = func(this, y)
       _update (func, y) {
-        const stack = mod.stackSave()
-        const xPos = this._sallocAndCopy()
-        const yPos = y._sallocAndCopy()
-        func(xPos, yPos)
-        this._save(xPos)
-        mod.stackRestore(stack)
+        callUpdate(func, this.a_, y.a_)
+      }
+      // this = func(buf [, ioMode]) ; buf is a string or Uint8Array
+      _setInput (func, buf, ioMode) {
+        callSetInput(func, this.a_, buf, ioMode)
+      }
+      // return the string of this
+      _getStr (func, ioMode) {
+        return callGetStr(func, this.a_, ioMode)
+      }
+      _deserialize (func, buf) {
+        callDeserialize(func, this.a_, buf)
+      }
+      _serialize (func) {
+        return callSerialize(func, this.a_)
+      }
+      // this = recover(vec, idVec) ; bls C API takes (out, vec, idVec, n)
+      // while glue callRecover calls func(out, idVec, vec, n) (mcl order)
+      _recover (func, vec, idVec) {
+        const r = callRecover((y, idVecPos, vecPos, n) => func(y, vecPos, idVecPos, n), this.a_, _toArrays(idVec), _toArrays(vec))
+        if (r) throw new Error('callRecover')
       }
     }
 
@@ -334,16 +219,16 @@ const _blsSetupFactory = (createModule) => {
         this._setter(mod._mclBnFr_setInt32, x)
       }
       deserialize (s) {
-        this._setter(exports.mclBnFr_deserialize, s)
+        this._deserialize(mod._mclBnFr_deserialize, s)
       }
       serialize () {
-        return this._getter(exports.mclBnFr_serialize)
+        return this._serialize(mod._mclBnFr_serialize)
       }
       setStr (s, base = 0) {
-        this._setter(exports.mclBnFr_setStr, s, base)
+        this._setInput(mod._mclBnFr_setStr, s, base)
       }
       getStr (base = 0) {
-        return this._getter(exports.mclBnFr_getStr, base)
+        return this._getStr(mod._mclBnFr_getStr, base)
       }
       isZero () {
         return this._getter(mod._mclBnFr_isZero) === 1
@@ -355,13 +240,13 @@ const _blsSetupFactory = (createModule) => {
         return this._isEqual(mod._mclBnFr_isEqual, rhs)
       }
       setLittleEndian (s) {
-        this._setter(exports.mclBnFr_setLittleEndian, s)
+        this._setInput(mod._mclBnFr_setLittleEndian, s)
       }
       setLittleEndianMod (s) {
-        this._setter(exports.mclBnFr_setLittleEndianMod, s)
+        this._setInput(mod._mclBnFr_setLittleEndianMod, s)
       }
       setBigEndianMod (s) {
-        this._setter(exports.mclBnFr_setBigEndianMod, s)
+        this._setInput(mod._mclBnFr_setBigEndianMod, s)
       }
       setByCSPRNG () {
         const a = new Uint8Array(MCLBN_FR_SIZE)
@@ -369,7 +254,7 @@ const _blsSetupFactory = (createModule) => {
         this.setLittleEndian(a)
       }
       setHashOf (s) {
-        this._setter(exports.mclBnFr_setHashOf, s)
+        this._setInput(mod._mclBnFr_setHashOf, s)
       }
     }
     exports.deserializeHexStrToFr = s => {
@@ -389,18 +274,18 @@ const _blsSetupFactory = (createModule) => {
         return this._isEqual(mod._blsIdIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(exports.blsIdDeserialize, s)
+        this._deserialize(mod._blsIdDeserialize, s)
       }
       serialize () {
-        return this._getter(exports.blsIdSerialize)
+        return this._serialize(mod._blsIdSerialize)
       }
       setStr (s, base = 10) {
         switch (base) {
           case 10:
-            this._setter(exports.blsIdSetDecStr, s)
+            this._setInput(mod._blsIdSetDecStr, s)
             return
           case 16:
-            this._setter(exports.blsIdSetHexStr, s)
+            this._setInput(mod._blsIdSetHexStr, s)
             return
           default:
             throw ('BlsId.setStr:bad base:' + base)
@@ -409,18 +294,18 @@ const _blsSetupFactory = (createModule) => {
       getStr (base = 10) {
         switch (base) {
           case 10:
-            return this._getter(exports.blsIdGetDecStr)
+            return this._getStr(mod._blsIdGetDecStr)
           case 16:
-            return this._getter(exports.blsIdGetHexStr)
+            return this._getStr(mod._blsIdGetHexStr)
           default:
             throw ('BlsId.getStr:bad base:' + base)
         }
       }
       setLittleEndian (s) {
-        this._setter(exports.blsSecretKeySetLittleEndian, s)
+        this._setInput(mod._blsSecretKeySetLittleEndian, s)
       }
       setLittleEndianMod (s) {
-        this._setter(exports.blsSecretKeySetLittleEndianMod, s)
+        this._setInput(mod._blsSecretKeySetLittleEndianMod, s)
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_ID_SIZE)
@@ -448,28 +333,28 @@ const _blsSetupFactory = (createModule) => {
         return this._isEqual(mod._blsSecretKeyIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(exports.blsSecretKeyDeserialize, s)
+        this._deserialize(mod._blsSecretKeyDeserialize, s)
       }
       serialize () {
-        return this._getter(exports.blsSecretKeySerialize)
+        return this._serialize(mod._blsSecretKeySerialize)
       }
       add (rhs) {
         this._update(mod._blsSecretKeyAdd, rhs)
       }
       share (msk, id) {
-        callShare(mod._blsSecretKeyShare, this, BLS_SECRETKEY_SIZE, msk, id)
+        callShare(mod._blsSecretKeyShare, this.a_, _toArrays(msk), id.a_)
       }
       recover (secVec, idVec) {
-        callRecover(mod._blsSecretKeyRecover, this, BLS_SECRETKEY_SIZE, secVec, idVec)
+        this._recover(mod._blsSecretKeyRecover, secVec, idVec)
       }
       setHashOf (s) {
-        this._setter(exports.blsHashToSecretKey, s)
+        this._setInput(mod._blsHashToSecretKey, s)
       }
       setLittleEndian (s) {
-        this._setter(exports.blsSecretKeySetLittleEndian, s)
+        this._setInput(mod._blsSecretKeySetLittleEndian, s)
       }
       setLittleEndianMod (s) {
-        this._setter(exports.blsSecretKeySetLittleEndianMod, s)
+        this._setInput(mod._blsSecretKeySetLittleEndianMod, s)
       }
       setByCSPRNG () {
         const a = new Uint8Array(BLS_SECRETKEY_SIZE)
@@ -478,12 +363,7 @@ const _blsSetupFactory = (createModule) => {
       }
       getPublicKey () {
         const pub = new exports.PublicKey()
-        const stack = mod.stackSave()
-        const secPos = this._sallocAndCopy()
-        const pubPos = pub._salloc()
-        mod._blsGetPublicKey(pubPos, secPos)
-        pub._save(pubPos)
-        mod.stackRestore(stack)
+        callOp1(mod._blsGetPublicKey, pub.a_, this.a_)
         return pub
       }
       /*
@@ -494,12 +374,7 @@ const _blsSetupFactory = (createModule) => {
       */
       sign (m) {
         const sig = new exports.Signature()
-        const stack = mod.stackSave()
-        const secPos = this._sallocAndCopy()
-        const sigPos = sig._salloc()
-        exports.blsSign(sigPos, secPos, m)
-        sig._save(sigPos)
-        mod.stackRestore(stack)
+        callOp1Input(mod._blsSign, sig.a_, this.a_, m)
         return sig
       }
     }
@@ -520,24 +395,24 @@ const _blsSetupFactory = (createModule) => {
         return this._isEqual(mod._blsPublicKeyIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(exports.blsPublicKeyDeserialize, s)
+        this._deserialize(mod._blsPublicKeyDeserialize, s)
       }
       serialize () {
-        return this._getter(exports.blsPublicKeySerialize)
+        return this._serialize(mod._blsPublicKeySerialize)
       }
       setStr (s, base = 0) {
-        const func = ETH_MODE ? exports.mclBnG1_setStr : exports.mclBnG2_setStr
-        this._setter(func, s, base)
+        const func = ETH_MODE ? mod._mclBnG1_setStr : mod._mclBnG2_setStr
+        this._setInput(func, s, base)
       }
       getStr (base = 0) {
-        const func = ETH_MODE ? exports.mclBnG1_getStr : exports.mclBnG2_getStr
-        return this._getter(func, base)
+        const func = ETH_MODE ? mod._mclBnG1_getStr : mod._mclBnG2_getStr
+        return this._getStr(func, base)
       }
       deserializeUncompressed (s) {
-        this._setter(exports.blsPublicKeyDeserializeUncompressed, s)
+        this._deserialize(mod._blsPublicKeyDeserializeUncompressed, s)
       }
       serializeUncompressed () {
-        return this._getter(exports.blsPublicKeySerializeUncompressed)
+        return this._serialize(mod._blsPublicKeySerializeUncompressed)
       }
       add (rhs) {
         this._update(mod._blsPublicKeyAdd, rhs)
@@ -546,21 +421,16 @@ const _blsSetupFactory = (createModule) => {
         this._update(mod._blsPublicKeyMul, rhs)
       }
       share (mpk, id) {
-        callShare(mod._blsPublicKeyShare, this, BLS_PUBLICKEY_SIZE, mpk, id)
+        callShare(mod._blsPublicKeyShare, this.a_, _toArrays(mpk), id.a_)
       }
       recover (secVec, idVec) {
-        callRecover(mod._blsPublicKeyRecover, this, BLS_PUBLICKEY_SIZE, secVec, idVec)
+        this._recover(mod._blsPublicKeyRecover, secVec, idVec)
       }
       isValidOrder () {
         return this._getter(mod._blsPublicKeyIsValidOrder)
       }
       verify (sig, m) {
-        const stack = mod.stackSave()
-        const pubPos = this._sallocAndCopy()
-        const sigPos = sig._sallocAndCopy()
-        const r = exports.blsVerify(sigPos, pubPos, m)
-        mod.stackRestore(stack)
-        return r != 0
+        return callGetter2Input(mod._blsVerify, sig.a_, this.a_, m) != 0
       }
     }
     exports.deserializeHexStrToPublicKey = s => {
@@ -569,19 +439,12 @@ const _blsSetupFactory = (createModule) => {
       return r
     }
     exports.setGeneratorOfPublicKey = pub => {
-      const stack = mod.stackSave()
-      const pubPos = pub._sallocAndCopy()
-      const r = mod._blsSetGeneratorOfPublicKey(pubPos)
-      mod.stackRestore(stack)
+      const r = callGetter(mod._blsSetGeneratorOfPublicKey, pub.a_)
       if (r !== 0) throw new Error('bad public key')
     }
     exports.getGeneratorOfPublicKey = () => {
       const pub = new exports.PublicKey()
-      const stack = mod.stackSave()
-      const pubPos = pub._salloc()
-      mod._blsGetGeneratorOfPublicKey(pubPos)
-      pub._save(pubPos)
-      mod.stackRestore(stack)
+      callSetter(mod._blsGetGeneratorOfPublicKey, pub.a_)
       return pub
     }
     exports.getGeneratorofPublicKey = () => {
@@ -600,30 +463,30 @@ const _blsSetupFactory = (createModule) => {
         return this._isEqual(mod._blsSignatureIsEqual, rhs)
       }
       deserialize (s) {
-        this._setter(exports.blsSignatureDeserialize, s)
+        this._deserialize(mod._blsSignatureDeserialize, s)
       }
       serialize () {
-        return this._getter(exports.blsSignatureSerialize)
+        return this._serialize(mod._blsSignatureSerialize)
       }
       deserializeUncompressed (s) {
-        this._setter(exports.blsSignatureDeserializeUncompressed, s)
+        this._deserialize(mod._blsSignatureDeserializeUncompressed, s)
       }
       setStr (s, base = 0) {
-        const func = ETH_MODE ? exports.mclBnG2_setStr : exports.mclBnG1_setStr
-        this._setter(func, s, base)
+        const func = ETH_MODE ? mod._mclBnG2_setStr : mod._mclBnG1_setStr
+        this._setInput(func, s, base)
       }
       getStr (base = 0) {
-        const func = ETH_MODE ? exports.mclBnG2_getStr : exports.mclBnG1_getStr
-        return this._getter(func, base)
+        const func = ETH_MODE ? mod._mclBnG2_getStr : mod._mclBnG1_getStr
+        return this._getStr(func, base)
       }
       serializeUncompressed () {
-        return this._getter(exports.blsSignatureSerializeUncompressed)
+        return this._serialize(mod._blsSignatureSerializeUncompressed)
       }
       add (rhs) {
         this._update(mod._blsSignatureAdd, rhs)
       }
       recover (secVec, idVec) {
-        callRecover(mod._blsSignatureRecover, this, BLS_SIGNATURE_SIZE, secVec, idVec)
+        this._recover(mod._blsSignatureRecover, secVec, idVec)
       }
       isValidOrder () {
         return this._getter(mod._blsSignatureIsValidOrder)
@@ -631,32 +494,33 @@ const _blsSetupFactory = (createModule) => {
       // this = aggSig
       aggregate (sigVec) {
         const n = sigVec.length
-        const stack = mod.stackSave()
-        const aggSigPos = this._sallocAndCopy()
-        const sigVecPos = mod.stackAlloc(BLS_SIGNATURE_SIZE * n)
-        for (let i = 0; i < n; i++) {
-          mod.HEAP32.set(sigVec[i].a_, (sigVecPos + BLS_SIGNATURE_SIZE * i) / 4)
+        if (n == 0) return false
+        const stack = stackSave()
+        let r
+        try {
+          const aggSigPos = sallocCopy(this.a_)
+          const sigVecPos = sallocArray(_toArrays(sigVec))
+          r = mod._blsAggregateSignature(aggSigPos, sigVecPos, n)
+          copyFromHeap32(this.a_, aggSigPos)
+        } finally {
+          stackRestore(stack)
         }
-        const r = mod._blsAggregateSignature(aggSigPos, sigVecPos, n)
-        this._save(aggSigPos)
-        mod.stackRestore(stack)
         return r == 1
       }
       // this = aggSig
       fastAggregateVerify (pubVec, msg) {
         const n = pubVec.length
+        if (n == 0) return false
         const msgSize = msg.length
-        const stack = mod.stackSave()
-        const aggSigPos = this._sallocAndCopy()
-        const pubVecPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
-        const msgPos = mod.stackAlloc(msgSize)
-        for (let i = 0; i < n; i++) {
-          mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
+        const stack = stackSave()
+        try {
+          const aggSigPos = sallocCopy(this.a_)
+          const pubVecPos = sallocArray(_toArrays(pubVec))
+          const msgPos = sallocBytes(msg)
+          return mod._blsFastAggregateVerify(aggSigPos, pubVecPos, n, msgPos, msgSize) == 1
+        } finally {
+          stackRestore(stack)
         }
-        mod.HEAP8.set(msg, msgPos)
-        const r = mod._blsFastAggregateVerify(aggSigPos, pubVecPos, n, msgPos, msgSize)
-        mod.stackRestore(stack)
-        return r == 1
       }
       // this = aggSig
       // msgVec = (32 * pubVec.length)-size Uint8Array
@@ -666,17 +530,15 @@ const _blsSetupFactory = (createModule) => {
         if (n == 0 || msgVec.length != msgSize * n) {
           return false
         }
-        const stack = mod.stackSave()
-        const aggSigPos = this._sallocAndCopy()
-        const pubVecPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
-        const msgPos = mod.stackAlloc(msgVec.length)
-        for (let i = 0; i < n; i++) {
-          mod.HEAP32.set(pubVec[i].a_, (pubVecPos + BLS_PUBLICKEY_SIZE * i) / 4)
+        const stack = stackSave()
+        try {
+          const aggSigPos = sallocCopy(this.a_)
+          const pubVecPos = sallocArray(_toArrays(pubVec))
+          const msgPos = sallocBytes(msgVec)
+          return mod._blsAggregateVerifyNoCheck(aggSigPos, pubVecPos, msgPos, msgSize, n) == 1
+        } finally {
+          stackRestore(stack)
         }
-        mod.HEAP8.set(msgVec, msgPos)
-        const r = mod._blsAggregateVerifyNoCheck(aggSigPos, pubVecPos, msgPos, msgSize, n)
-        mod.stackRestore(stack)
-        return r == 1
       }
     }
     exports.deserializeHexStrToSignature = s => {
@@ -726,25 +588,23 @@ const _blsSetupFactory = (createModule) => {
       for (let i = 0; i < n; i++) {
         if (msgs[i].length != MSG_SIZE) return false
       }
-      const stack = mod.stackSave()
-      const sigPos = mod.stackAlloc(BLS_SIGNATURE_SIZE * n)
-      const pubPos = mod.stackAlloc(BLS_PUBLICKEY_SIZE * n)
-      const msgPos = mod.stackAlloc(MSG_SIZE * n)
-      const randPos = mod.stackAlloc(RAND_SIZE * n)
-
-      // getRandomValues accepts only Uint8Array
-      const rai = mod.HEAP8.subarray(randPos, randPos + RAND_SIZE * n)
-      const rau = new Uint8Array(rai.buffer, randPos, rai.length)
-      exports.getRandomValues(rau)
-      for (let i = 0; i < n; i++) {
-        mod.HEAP32.set(sigs[i].a_, (sigPos + BLS_SIGNATURE_SIZE * i) / 4)
-        mod.HEAP32.set(pubs[i].a_, (pubPos + BLS_PUBLICKEY_SIZE * i) / 4)
-        mod.HEAP8.set(msgs[i], msgPos + MSG_SIZE * i)
+      if (n == 0) return false
+      const stack = stackSave()
+      try {
+        const sigPos = sallocArray(_toArrays(sigs))
+        const pubPos = sallocArray(_toArrays(pubs))
+        const msgPos = stackAlloc(MSG_SIZE * n)
+        const randPos = stackAlloc(RAND_SIZE * n)
+        const HEAP8 = mod.HEAP8
+        for (let i = 0; i < n; i++) {
+          HEAP8.set(msgs[i], msgPos + MSG_SIZE * i)
+        }
+        // getRandomValues accepts only Uint8Array
+        exports.getRandomValues(new Uint8Array(HEAP8.buffer, randPos, RAND_SIZE * n))
+        return mod._blsMultiVerify(sigPos, pubPos, msgPos, MSG_SIZE, randPos, RAND_SIZE, n, threadNum) == 1
+      } finally {
+        stackRestore(stack)
       }
-      const r = mod._blsMultiVerify(sigPos, pubPos, msgPos, MSG_SIZE, randPos, RAND_SIZE, n, threadNum)
-
-      mod.stackRestore(stack)
-      return r == 1
     }
     exports.blsInit(curveType)
     if (exports.ethMode) {
